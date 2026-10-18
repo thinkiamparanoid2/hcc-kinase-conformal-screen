@@ -68,6 +68,10 @@ EXHAUSTIVENESS = 32         # was 8 for everything but the redock
 BOX_PADDING = 8.0           # A added to the ligand's longest dimension
 MIN_BOX = 22.0              # A, floor so small ligands still sample the pocket
 IMPLAUSIBLE_SCORE = -4.0    # weaker than this is treated as a placement failure
+# Vina threads per docking. Asking for more threads than the machine has
+# oversubscribes the cores and runs slower, and the thread count is part of
+# what makes a seeded run reproducible, so it is recorded in the summary.
+N_CPU = max(1, os.cpu_count() or 1)
 
 POCKETS = {
     "EGFR": {"pdb": "data/targets/egfr_1m17.pdb",
@@ -355,7 +359,7 @@ def smiles_to_pdbqt(smiles, out_pdbqt, n_confs=1):
 
 
 def dock_pdbqt(target, lig_pdbqt, out_pdbqt, exhaustiveness=EXHAUSTIVENESS,
-               cpu=4, n_seeds=N_SEEDS):
+               cpu=N_CPU, n_seeds=N_SEEDS):
     """Dock with `n_seeds` replicates. Returns (mean, sd, [scores], placement_suspect).
 
     A single Vina run with one seed gives a number with no error bar. Replicates
@@ -460,7 +464,7 @@ def run_enrichment_control(n_per_class=N_PER_CLASS, exhaustiveness=EXHAUSTIVENES
             if not smiles_to_pdbqt(r["canonical_smiles"], lpdbqt):
                 continue
             mean, sd, _, _ = dock_pdbqt(t, lpdbqt, opdbqt,
-                                        exhaustiveness=exhaustiveness, cpu=8)
+                                        exhaustiveness=exhaustiveness, cpu=N_CPU)
             if np.isfinite(mean):
                 scores.append(mean)
                 sds.append(sd)
@@ -562,7 +566,7 @@ def dock_consensus_candidates(n_novel=25, n_control=8, exhaustiveness=EXHAUSTIVE
         for t in C.TARGETS:
             opdbqt = os.path.join(POSE_DIR, t, f"{cid}_{t}_docked.pdbqt")
             mean, sd, _, suspect = dock_pdbqt(t, lpdbqt, opdbqt,
-                                              exhaustiveness=exhaustiveness, cpu=8)
+                                              exhaustiveness=exhaustiveness, cpu=N_CPU)
             batch.loc[idx, f"{t}_vina_kcal"] = mean
             batch.loc[idx, f"{t}_vina_sd"] = sd
             batch.loc[idx, f"{t}_placement_suspect"] = suspect
@@ -583,6 +587,26 @@ def dock_consensus_candidates(n_novel=25, n_control=8, exhaustiveness=EXHAUSTIVE
     return batch
 
 
+def tool_versions():
+    """Record what actually produced these poses.
+
+    Receptor protonation differs between Open Babel builds, so two runs of this
+    step can start from slightly different receptors. Pinning the versions in
+    environment.yml is the fix; reporting them is how a reader can tell whether a
+    given results file came from the pinned pair.
+    """
+    vina, obabel = binaries()
+    out = {}
+    for label, cmd in (("vina", [vina, "--version"]),
+                       ("open_babel", [obabel, "-V"])):
+        try:
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            out[label] = (res.stdout or res.stderr).strip().splitlines()[0]
+        except Exception:
+            out[label] = "unknown"
+    return out
+
+
 def main():
     print("=== Step 06: Structure-based docking validation (AutoDock Vina) ===",
           flush=True)
@@ -598,7 +622,9 @@ def main():
     summary = {
         "settings": {"exhaustiveness": EXHAUSTIVENESS, "n_seeds": N_SEEDS,
                      "box_padding_A": BOX_PADDING, "min_box_A": MIN_BOX,
-                     "n_per_class_enrichment": N_PER_CLASS},
+                     "n_per_class_enrichment": N_PER_CLASS,
+                     "vina_cpu_threads": N_CPU,
+                     "tool_versions": tool_versions()},
         "redocking_control": redock,
         "enrichment_control": enrichment,
         "candidates_summary": {
