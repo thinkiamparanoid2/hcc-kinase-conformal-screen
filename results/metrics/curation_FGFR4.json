@@ -1,0 +1,19 @@
+{
+  "target": "FGFR4",
+  "n_raw_records": 3682,
+  "n_unparsable_structures": 0,
+  "n_unique_parents_before_noise_filter": 3609,
+  "n_dropped_replicate_sd_above_threshold": 1,
+  "max_replicate_sd": 1.0,
+  "n_final": 3608,
+  "n_exact": 3608,
+  "n_censored_lower_bound_potency": 0,
+  "n_censored_upper_bound_potency": 0,
+  "exact_active_prevalence_at_pIC50_6": 0.7630266075388027,
+  "replicate_sd_median_multi_measured": 0.0035096676086333865,
+  "replicate_sd_n_multi_measured": 69,
+  "label_variance_exact": 1.5643340803609456,
+  "r2_ceiling_from_label_noise": 0.9999921258720387,
+  "source": "recurated_from_existing_csv",
+  "censored_records_available": false
+}
