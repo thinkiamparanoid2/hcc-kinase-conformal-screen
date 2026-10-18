@@ -377,6 +377,15 @@ def test_rmsd_returns_none_for_a_different_molecule():
     assert mod.symmetry_corrected_rmsd(_embedded("CCO"), _embedded("CCCCCCN")) is None
 
 
+def test_candidate_docking_names_step_05_when_there_is_no_screen(tmp_path, monkeypatch):
+    """With no screen at all the blocker is step 05, not step 07's annotation."""
+    mod = _docking_module()
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(mod.StaleScreenOutput) as excinfo:
+        mod.dock_consensus_candidates()
+    assert "05_screen_coconut_library" in str(excinfo.value)
+
+
 def test_candidate_docking_refuses_a_pre_rewrite_screen_output(tmp_path, monkeypatch):
     """Step 06 reuses whatever screen output it finds. An old one names its hits
     by a rule this work withdrew, so docking it would attach current scores to a

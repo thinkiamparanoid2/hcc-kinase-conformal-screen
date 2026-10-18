@@ -595,8 +595,16 @@ def dock_consensus_candidates(n_novel=25, n_control=8, exhaustiveness=EXHAUSTIVE
 
     ann_path = "results/predictions/consensus_hits_annotated.csv"
     cons_path = "results/predictions/consensus_hits.csv"
+    if not os.path.exists(cons_path):
+        raise StaleScreenOutput(
+            f"{cons_path} missing: there is no full-library screen to take "
+            f"candidates from. Run `python scripts/05_screen_coconut_library.py` "
+            f"(needs the COCONUT library; see data/README.md), then step 07 to "
+            f"annotate the shortlist.")
     if not os.path.exists(ann_path):
-        raise FileNotFoundError(f"{ann_path} missing; run step 07's annotation first.")
+        raise StaleScreenOutput(
+            f"{ann_path} missing; run `python scripts/07_generate_report.py` to "
+            f"annotate the shortlist that step 05 produced.")
     ann = pd.read_csv(ann_path).head(n_novel).copy()
 
     # A screen output from before the rewrite names its hits by a rule this work
