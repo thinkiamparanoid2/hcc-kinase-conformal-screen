@@ -422,7 +422,7 @@ def screen_section():
 def docking_section():
     dock_json = os.path.join(C.METRICS_DIR, "docking_validation.json")
     dock_csv = os.path.join("results", "predictions", "consensus_hits_docked.csv")
-    if not (os.path.exists(dock_json) and os.path.exists(dock_csv)):
+    if not os.path.exists(dock_json):
         return missing("4. Structure-based docking validation",
                        "python scripts/06_docking_validation.py")
     dv = C.load_json(dock_json)
@@ -439,16 +439,25 @@ def docking_section():
                 "comparisons. They are withheld here. Regenerate with:_ "
                 "`python scripts/06_docking_validation.py` "
                 "_(needs `vina` and `obabel`; see `docs/REPRODUCE.md`)._\n")
-    df = pd.read_csv(dock_csv)
     settings = dv.get("settings", {})
 
-    lines = [
-        "## 4. Orthogonal structure-based validation (AutoDock Vina)\n",
+    lines = ["## 4. Orthogonal structure-based validation (AutoDock Vina)\n"]
+    if settings.get("protocol_note"):
+        lines.append(f"> **{settings['protocol_note']}**\n")
+    versions = settings.get("tool_versions") or {}
+    if versions:
+        lines.append("_Produced by " + ", ".join(
+            str(v) for _, v in sorted(versions.items())) +
+            f", {settings.get('vina_cpu_threads')} threads per docking._\n")
+    lines += [
         f"Boxes are centred on the co-crystal ligand heavy-atom centroid in chain A "
         f"and sized to the ligand (minimum {settings.get('min_box_A')} A, "
         f"{settings.get('box_padding_A')} A padding), pH 7.4 protonation, Gasteiger "
-        f"charges, exhaustiveness {settings.get('exhaustiveness')}, "
-        f"{settings.get('n_seeds')} seeds per docking.\n",
+        f"charges. Redocking and candidate docking: exhaustiveness "
+        f"{settings.get('exhaustiveness')}, {settings.get('n_seeds')} seeds per "
+        f"docking. Enrichment control: exhaustiveness "
+        f"{settings.get('enrich_exhaustiveness')}, "
+        f"{settings.get('enrich_n_seeds')} seed(s).\n",
         f"> **Score comparability.** {dv.get('score_comparability_note', '')}\n",
         "### 4.1 Control 1: co-crystal redocking (pose prediction)\n",
         "Top-1 RMSD is the control: it is what the method would produce "
@@ -468,12 +477,29 @@ def docking_section():
             "pass at 2 A": rc.get("pose_prediction_success_top1"),
             f"best-of-N RMSD (A)": rc.get("rmsd_best_of_n_A"),
             "N poses": rc.get("n_poses"),
+            "native pose rank": rc.get("best_pose_rank"),
+            "score gap (kcal/mol)": rc.get("affinity_gap_to_best_pose_kcal"),
         })
     if rows:
         lines.append(md_table(pd.DataFrame(rows)) + "\n")
         n_pass = sum(1 for r in rows if r["pass at 2 A"])
         lines.append(f"Pose prediction succeeds at the conventional 2 A criterion "
                      f"for {n_pass} of {len(rows)} pockets.\n")
+        ranked = [r for r in rows if r.get("native pose rank")]
+        missed = [r for r in ranked if r["native pose rank"] > 1]
+        if missed:
+            worst = max(abs(r["score gap (kcal/mol)"] or 0) for r in missed)
+            lines.append(
+                "Where top-1 fails, the search still produced a near-native pose: "
+                + ", ".join(f"{r['target']} ranks it {r['native pose rank']}"
+                            for r in missed)
+                + f", separated "
+                f"from the top-scoring pose by at most {worst:.2f} kcal/mol. Vina's "
+                "scoring function is not quoted to that precision, so these are "
+                "ranking failures rather than sampling failures: the pose is found "
+                "and cannot be told apart from its rivals. This is the reason "
+                "docking enters this work as an orthogonal check and not as a "
+                "source of truth about binding mode.\n")
 
     lines.append("### 4.2 Control 2: active-versus-inactive enrichment\n")
     erows = []
@@ -493,15 +519,111 @@ def docking_section():
             "AUC 95% CI": ci_str(ec.get("docking_ROC_AUC_CI95")),
             "EF1%": ec.get("EF1pct"), "EF5%": ec.get("EF5pct"),
             "BEDROC": ec.get("BEDROC_alpha20"),
+            "beats chance": ", ".join(
+                k for k, v in (ec.get("null_baselines") or {}).items()
+                if isinstance(v, dict) and v.get("exceeds_null")) or "none",
         })
     if erows:
         lines.append(md_table(pd.DataFrame(erows), "{:.3f}") + "\n")
+        # State the per-target verdict explicitly, and separate the two things
+        # these metrics measure. AUC is global separation; EF and BEDROC are
+        # early recognition, which is what a screen actually uses. A pocket can
+        # have one without the other, and averaging the three AUCs would
+        # describe no pocket while overstating every one of them.
+        ok = [(t, dv["enrichment_control"][t]) for t in C.TARGETS
+              if isinstance((dv.get("enrichment_control") or {}).get(t), dict)
+              and dv["enrichment_control"][t].get("status") == "ok"]
+
+        def _beats(ec, metric):
+            nb = (ec.get("null_baselines") or {}).get(metric)
+            return bool(isinstance(nb, dict) and nb.get("exceeds_null"))
+
+        global_sep = [t for t, ec in ok if _beats(ec, "ROC_AUC")]
+        early = [t for t, ec in ok
+                 if _beats(ec, "EF5pct") or _beats(ec, "BEDROC_alpha20")]
+        inverted = [t for t, ec in ok if (ec.get("docking_ROC_AUC") or 0) < 0.5]
+        n_tests = sum(len(ec.get("null_baselines") or {}) for _, ec in ok)
+
+        if ok:
+            bits = [f"Docking enrichment is target-dependent and is not "
+                    f"established here as a general filter."]
+            bits.append(
+                f"Global separation (AUC outside its null): "
+                f"{', '.join(global_sep) if global_sep else 'none'}.")
+            bits.append(
+                f"Early recognition (EF5% or BEDROC outside its null): "
+                f"{', '.join(early) if early else 'none'}.")
+            if inverted:
+                bits.append(
+                    f"{', '.join(inverted)} scores below 0.5, so the ranking is "
+                    f"there if anything inverted.")
+            bits.append(
+                f"The two are different claims and no pocket has both, so the "
+                f"result is not one effect seen three times. With {n_tests} "
+                f"null comparisons in this table and EF5% and BEDROC strongly "
+                f"correlated, a single metric clearing its null in a single "
+                f"pocket is weak evidence on its own; treat it as a direction to "
+                f"confirm on a larger set, not as a validated filter.")
+            bits.append(
+                "These are not averaged. A pocket where docking does not enrich "
+                "cannot corroborate a prediction for a compound in that pocket.")
+            lines.append("> **Verdict.** " + " ".join(bits) + "\n")
+
         sampling = next((ec.get("sampling") for ec in
                          (dv.get("enrichment_control") or {}).values()
                          if isinstance(ec, dict) and ec.get("sampling")), None)
         if sampling:
             lines.append(f"_Sampling: {sampling}._\n")
+        inactive_class = next((ec.get("inactive_class") for ec in
+                               (dv.get("enrichment_control") or {}).values()
+                               if isinstance(ec, dict) and ec.get("inactive_class")), None)
+        caveat = next((ec.get("metric_caveat") for ec in
+                       (dv.get("enrichment_control") or {}).values()
+                       if isinstance(ec, dict) and ec.get("metric_caveat")), None)
+        if caveat:
+            lines.append(f"> **How to read these metrics.** {caveat}\n")
+            null_rows = []
+            for t in C.TARGETS:
+                ec = (dv.get("enrichment_control") or {}).get(t) or {}
+                for metric, nb in (ec.get("null_baselines") or {}).items():
+                    if not isinstance(nb, dict):
+                        continue
+                    null_rows.append({
+                        "target": t, "metric": metric,
+                        "observed": nb.get("observed"),
+                        "random mean": nb.get("null_mean"),
+                        "random 5-95%": f"{nb.get('null_5pct')} - {nb.get('null_95pct')}",
+                        "p": nb.get("p_one_sided"),
+                        "outside null": nb.get("exceeds_null"),
+                    })
+            if null_rows:
+                lines.append("Each metric against a label-shuffled null on the "
+                             "same design:\n")
+                lines.append(md_table(pd.DataFrame(null_rows)) + "\n")
 
+        if inactive_class:
+            lines.append(
+                f"> **What the negative class is.** {inactive_class}. This matters "
+                "for how the AUC reads: a true inactive is a `>` record, where the "
+                "assay ran and found nothing, whereas a measured weak binder still "
+                "occupies the pocket. Discriminating actives from weak binders is "
+                "the harder task, so an AUC measured this way understates what the "
+                "same control would give against true non-binders, and is not "
+                "comparable to a published enrichment that used decoys.\n")
+
+    cand_status = (dv.get("candidates_summary") or {}).get("status", "ok")
+    if cand_status != "ok" or not os.path.exists(dock_csv):
+        lines.append("### 4.3 Candidate docking\n")
+        lines.append(
+            "_Not available. The two controls above stand on their own: they need "
+            "only the co-crystal structures and the curated training sets. Docking "
+            "the candidate shortlist needs a current full-library screen, and there "
+            "is none in this repository._\n")
+        if cand_status != "ok":
+            lines.append(f"_Reason: {cand_status}_\n")
+        return "\n".join(lines)
+
+    df = pd.read_csv(dock_csv)
     lines.append("### 4.3 Candidate docking by chemotype\n")
     chemo_cols = [c for c in df.columns if c.startswith("chemotype_")] or \
                  [c for c in C.CHEMOTYPE_SMARTS if c in df.columns]
@@ -629,6 +751,29 @@ def limitations_section():
             items.append(
                 f"Top-1 redocking fails the 2 A criterion for {', '.join(fails)}, so "
                 f"pose-level conclusions in those pockets are not supported.")
+        enr = [(t, ec) for t, ec in (dv.get("enrichment_control") or {}).items()
+               if isinstance(ec, dict) and ec.get("status") == "ok"]
+        if enr:
+            def _clears(ec, *metrics):
+                nb = ec.get("null_baselines") or {}
+                return any(isinstance(nb.get(m), dict) and nb[m].get("exceeds_null")
+                           for m in metrics)
+            no_signal = [t for t, ec in enr
+                         if not _clears(ec, "ROC_AUC", "EF5pct", "BEDROC_alpha20")]
+            if no_signal:
+                items.append(
+                    f"Docking does not enrich actives over the negative class for "
+                    f"{', '.join(no_signal)}: no metric clears its label-shuffled "
+                    f"null. A docking score therefore carries no validated "
+                    f"discriminative weight in those pockets and cannot be used to "
+                    f"support or filter a prediction there.")
+            if len(no_signal) < len(enr):
+                items.append(
+                    "Where docking does enrich, it does so inconsistently: no "
+                    "pocket shows both global separation and early recognition, so "
+                    "the enrichment control licenses a direction to confirm on a "
+                    "larger set rather than a general-purpose structure-based "
+                    "filter.")
         if dv.get("score_comparability_note"):
             items.append(dv["score_comparability_note"])
 
