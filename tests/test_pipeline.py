@@ -375,3 +375,40 @@ def test_rmsd_matches_molecules_whose_bond_orders_were_perceived_differently():
 def test_rmsd_returns_none_for_a_different_molecule():
     mod = _docking_module()
     assert mod.symmetry_corrected_rmsd(_embedded("CCO"), _embedded("CCCCCCN")) is None
+
+
+def test_candidate_docking_refuses_a_pre_rewrite_screen_output(tmp_path, monkeypatch):
+    """Step 06 reuses whatever screen output it finds. An old one names its hits
+    by a rule this work withdrew, so docking it would attach current scores to a
+    candidate list the current screen would not produce."""
+    import pandas as pd
+
+    mod = _docking_module()
+    preds = tmp_path / "results" / "predictions"
+    preds.mkdir(parents=True)
+    stale = pd.DataFrame({"identifier": ["CNP1"], "smiles": ["CCO"],
+                          "n_targets_confident": [3], "rediscovery_any": [False]})
+    stale.to_csv(preds / "consensus_hits_annotated.csv", index=False)
+    stale.to_csv(preds / "consensus_hits.csv", index=False)
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(mod.StaleScreenOutput) as excinfo:
+        mod.dock_consensus_candidates()
+    assert "interval_lower_bound_active" in str(excinfo.value)
+    assert "05_screen_coconut_library" in str(excinfo.value)
+
+
+def test_protocol_note_is_silent_at_the_defaults_and_names_every_override():
+    mod = _docking_module()
+    assert mod.protocol_note() is None
+
+    import importlib
+    os.environ["DOCK_ENRICH_N_SEEDS"] = "1"
+    try:
+        reduced = _docking_module()
+        note = reduced.protocol_note()
+        assert note is not None
+        assert "enrich_n_seeds 1 instead of 3" in note
+        assert "DOCK_ENRICH_N_SEEDS" in note
+    finally:
+        del os.environ["DOCK_ENRICH_N_SEEDS"]

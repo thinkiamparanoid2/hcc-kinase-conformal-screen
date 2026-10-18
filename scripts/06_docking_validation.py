@@ -185,6 +185,10 @@ def _flatten_graph(mol):
     return out
 
 
+class StaleScreenOutput(RuntimeError):
+    """Raised when the screen output on disk is not what the current step 05 writes."""
+
+
 def _affinity_gap(docked, rmsds, valid):
     """Score difference between the top-ranked pose and the lowest-RMSD pose."""
     if not valid or not docked:
@@ -562,6 +566,21 @@ def dock_consensus_candidates(n_novel=25, n_control=8, exhaustiveness=EXHAUSTIVE
     if not os.path.exists(ann_path):
         raise FileNotFoundError(f"{ann_path} missing; run step 07's annotation first.")
     ann = pd.read_csv(ann_path).head(n_novel).copy()
+
+    # A screen output from before the rewrite names its hits by a rule this work
+    # withdrew (`confident_active`, since renamed `interval_lower_bound_active`),
+    # carries no scaffold-level novelty and was not deduplicated to 2D parents.
+    # Docking it would attach current poses and current scores to a candidate
+    # list the current screen would not produce, which is the same staleness the
+    # report refuses to render, only harder to notice.
+    required = {"interval_lower_bound_active", "known_scaffold", "pan_kinase_alert"}
+    stale = required - set(ann.columns)
+    if stale:
+        raise StaleScreenOutput(
+            f"{ann_path} predates the current step 05: missing "
+            f"{', '.join(sorted(stale))}. Re-run `python "
+            f"scripts/05_screen_coconut_library.py` (needs the COCONUT library; "
+            f"see data/README.md) before docking candidates.")
     ann["category"] = "novel_consensus"
 
     cons = pd.read_csv(cons_path)
@@ -685,10 +704,21 @@ def main():
 
     redock = prepare_receptors_and_redock()
     enrichment = run_enrichment_control()
-    batch = dock_consensus_candidates()
 
-    nov = batch[batch["category"] == "novel_consensus"]
-    red = batch[batch["category"] == "rediscovery_control"]
+    # The two controls stand on their own: they need only the co-crystal
+    # structures and the curated training sets. Candidate docking needs a current
+    # screen, so when there is none the controls are still reported and the
+    # candidate block says why it is absent.
+    candidates_status = "ok"
+    try:
+        batch = dock_consensus_candidates()
+    except (FileNotFoundError, StaleScreenOutput) as exc:
+        candidates_status = str(exc)
+        batch = None
+        print(f"\n[!] Candidate docking skipped: {exc}", flush=True)
+
+    nov = batch[batch["category"] == "novel_consensus"] if batch is not None else None
+    red = batch[batch["category"] == "rediscovery_control"] if batch is not None else None
     summary = {
         "settings": {"exhaustiveness": EXHAUSTIVENESS, "n_seeds": N_SEEDS,
                      "box_padding_A": BOX_PADDING, "min_box_A": MIN_BOX,
@@ -701,13 +731,14 @@ def main():
         "redocking_control": redock,
         "enrichment_control": enrichment,
         "candidates_summary": {
+            "status": candidates_status,
             "n_novel_docked": int(nov["FGFR4_vina_kcal"].notna().sum()),
             "n_control_docked": int(red["FGFR4_vina_kcal"].notna().sum()),
             "per_target_novel_mean_kcal": {
                 t: round(float(nov[f"{t}_vina_kcal"].mean()), 2) for t in C.TARGETS},
             "per_target_placement_failures": {
                 t: int(nov[f"{t}_placement_suspect"].sum()) for t in C.TARGETS},
-        },
+        } if batch is not None else {"status": candidates_status},
         "score_comparability_note": (
             "AutoDock Vina scores are empirical and receptor-specific. They are not "
             "transferable binding free energies, so a weaker score in one pocket "
