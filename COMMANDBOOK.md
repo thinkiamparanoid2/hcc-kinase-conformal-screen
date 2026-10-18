@@ -1,34 +1,76 @@
-# COMMANDBOOK — Pipeline Execution Reference
+# COMMANDBOOK — pipeline execution reference
 
-**Project:** Domain-Calibrated Machine Learning & Structure-Based Virtual Screening of Natural Products Against Hepatocellular Carcinoma Kinases (`EGFR`, `FGFR4`, `VEGFR2`)
+**Project:** Domain-calibrated machine learning and structure-based virtual
+screening of natural products against hepatocellular carcinoma kinases
+(`EGFR`, `FGFR4`, `VEGFR2`).
+
+All commands are platform-independent. Use `python` from the activated
+environment; no interpreter path is hard-coded anywhere in the pipeline.
 
 ## Environment
-```powershell
-Repo:   hcc-kinase-conformal-screen
-Python: F:\miniconda3\envs\hcc-screen\python.exe (or conda activate hcc-screen)
+
+```bash
+conda env create -f environment.yml && conda activate hcc-screen   # includes vina, obabel
+# or
+pip install -r requirements.txt                                     # steps 01-05, 07 only
 ```
 
-## Run Full Pipeline (With Checkpoint/Resume)
-```powershell
-& "F:\miniconda3\envs\hcc-screen\python.exe" scripts/run_pipeline.py
+External binaries are found on `PATH`. Override with environment variables when
+they live elsewhere:
+
+```bash
+export VINA_BIN=/path/to/vina
+export OBABEL_BIN=/path/to/obabel
 ```
-- **Resume from specific step:** `& "F:\miniconda3\envs\hcc-screen\python.exe" scripts/run_pipeline.py --from-step 3`
-- **Reset all checkpoints:** `& "F:\miniconda3\envs\hcc-screen\python.exe" scripts/run_pipeline.py --reset`
 
-## Run Steps Individually (`scripts/01` – `07`)
-1. **Fetch & curate ChEMBL IC50 data:** `& "F:\miniconda3\envs\hcc-screen\python.exe" scripts/01_fetch_chembl_data.py`
-2. **Generate training features (21 descriptors + 2048-bit ECFP4):** `& "F:\miniconda3\envs\hcc-screen\python.exe" scripts/02_feature_engineering.py`
-3. **10-seed Murcko-scaffold benchmark:** `& "F:\miniconda3\envs\hcc-screen\python.exe" scripts/03_scaffold_benchmark.py`
-4. **Final XGBoost models, Mondrian conformal AD & NP domain shift:** `& "F:\miniconda3\envs\hcc-screen\python.exe" scripts/04_conformal_ad_models.py`
-5. **Full 738k COCONUT natural-product screen:** `& "F:\miniconda3\envs\hcc-screen\python.exe" scripts/05_screen_coconut_library.py`
-6. **Orthogonal structure-based docking validation (AutoDock Vina 1.2.5):** `& "F:\miniconda3\envs\hcc-screen\python.exe" scripts/06_docking_validation.py`
-7. **Auto-generated report, PAINS/QED triage & figures:** `& "F:\miniconda3\envs\hcc-screen\python.exe" scripts/07_generate_report.py`
+## Full pipeline
 
-## Key Outputs
-- `results/metrics/benchmark_long.csv`, `benchmark_summary.csv`, `benchmark_paired.json`
-- `results/metrics/final_model_<TARGET>.json`, `<TARGET>_test_predictions.csv`
-- `models/<TARGET>_xgb_final.json`, `<TARGET>_conformal.json`
-- `results/predictions/<TARGET>_screen_full.csv.gz` (all 738,823 valid compounds with `pred`, 90% conformal `[lo, hi]`, `sim_train`, `in_AD`, `rediscovery`)
-- `results/predictions/consensus_hits.csv`, `consensus_hits_annotated.csv`, `consensus_hits_docked.csv`
-- `results/metrics/docking_validation.json` & `results/docking_poses/<TARGET>/*_docked.pdbqt`
-- `results/reports/results_report.md`, `results/figures/fig1_benchmark.png`, `fig2_domain_shift.png`, `fig3_docking_validation.png`
+```bash
+python scripts/run_pipeline.py              # run, resuming from the last checkpoint
+python scripts/run_pipeline.py --list       # show steps and their prerequisites
+python scripts/run_pipeline.py --from-step 3
+python scripts/run_pipeline.py --only 4 7
+python scripts/run_pipeline.py --reset      # clear checkpoints
+```
+
+A step whose prerequisites are missing is skipped with the reason printed, rather
+than crashing partway through.
+
+## Individual steps
+
+| Step | Command | Needs |
+|---|---|---|
+| 1 | `python scripts/01_fetch_chembl_data.py` | ChEMBL network access |
+| 1b | `python scripts/01_fetch_chembl_data.py --from-existing` | re-curate local CSVs offline |
+| 2 | `python scripts/02_feature_engineering.py` | step 1 output |
+| 3 | `python scripts/03_scaffold_benchmark.py` | step 2 output |
+| 4 | `python scripts/04_conformal_ad_models.py` | steps 2-3 output |
+| 5 | `python scripts/05_screen_coconut_library.py` | step 4 + COCONUT library |
+| 6 | `python scripts/06_docking_validation.py` | step 5 + `vina`, `obabel` |
+| 7 | `python scripts/07_generate_report.py` | whatever exists; missing sections are marked |
+
+Smoke test a single target and seed:
+
+```bash
+python scripts/03_scaffold_benchmark.py FGFR4 0
+python scripts/04_conformal_ad_models.py FGFR4
+```
+
+## Tests
+
+```bash
+pytest -q
+```
+
+## Key outputs
+
+- `results/metrics/curation_<TARGET>.json` — curation counts, censoring, label noise
+- `results/metrics/benchmark_canonical.json` — canonical split with bootstrap CIs
+- `results/metrics/benchmark_temporal.json` — temporal holdout
+- `results/metrics/model_selection.json` — the family steps 04-05 use, and why
+- `results/metrics/final_model_<TARGET>.json` — conformal bins, `tau` + CI, NP transfer
+- `models/<TARGET>_final.{json,pkl}`, `models/<TARGET>_conformal.json`
+- `results/predictions/<TARGET>_screen_full.csv.gz` — full screen with novelty flags
+- `results/predictions/consensus_hits{,_annotated,_docked}.csv`
+- `results/metrics/docking_validation.json` — redocking, enrichment, candidates
+- `results/reports/results_report.md`, `results/figures/fig{1,2,3}_*.png`

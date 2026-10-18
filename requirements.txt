@@ -1,9 +1,13 @@
+# Python dependencies. External binaries (AutoDock Vina 1.2.5, Open Babel 3.1.1)
+# are NOT installable from PyPI -- use environment.yml, or install them separately
+# and point VINA_BIN / OBABEL_BIN at them. Steps 01-05 and 07 need none of them.
 numpy==2.2.6
 pandas==2.3.3
 scipy==1.15.3
 scikit-learn==1.7.2
 xgboost==3.2.0
-rdkit==2026.03.4
+rdkit==2025.3.4
 matplotlib==3.10.9
 tqdm>=4.66.0
 chembl-webresource-client>=0.10.9
+pytest>=8.0.0

@@ -18,3 +18,9 @@ data/features/*_training_features.csv
 
 # Full 738k per-target raw screen dumps (~40 MB each; consensus shortlists are tracked)
 results/predictions/*_screen_full.csv.gz
+
+# Pipeline checkpoint is run-local state, not a result
+pipeline_checkpoint.json
+
+# Docking replicate poses (seeds 2+); seed-1 poses are tracked
+results/docking_poses/**/*_s[0-9].pdbqt
