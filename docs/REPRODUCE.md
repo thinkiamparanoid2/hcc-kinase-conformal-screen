@@ -16,6 +16,20 @@ Python stack, so step 06 runs without a separate install. With pip
 (`pip install -r requirements.txt`) steps 01–05 and 07 run; step 06 needs the two
 binaries on `PATH`, or `VINA_BIN` / `OBABEL_BIN` pointing at them.
 
+Without conda, the two binaries can be had directly:
+
+```bash
+pip install openbabel-wheel                 # provides the obabel CLI
+curl -L -o vina https://github.com/ccsb-scripps/AutoDock-Vina/releases/download/v1.2.5/vina_1.2.5_linux_x86_64
+chmod +x vina && export VINA_BIN="$PWD/vina"
+```
+
+Open Babel's protonation differs slightly between builds, so the prepared
+receptors under `data/targets/*.pdbqt` are not byte-identical across
+environments. They are regenerated from `*_clean_receptor.pdb` on every run, and
+`docking_validation.json` records the Vina and Open Babel versions that produced
+a given results file.
+
 Docker, if you would rather not touch the host environment:
 
 ```bash
@@ -43,6 +57,22 @@ Approximate cost on 8 cores: step 02 ~10 min, step 03 ~1–2 h (10 seeds x 3 tar
 x 6 models), step 04 ~15 min, step 05 ~20–40 min, step 06 hours (dominated by
 docking x `N_SEEDS` replicates x exhaustiveness 32), step 07 seconds.
 
+### Running step 06 on fewer cores
+
+At the protocol, step 06 is about 900 Vina runs: roughly 11 hours on four cores.
+The budget can be reduced for a run, and every override is written into
+`docking_validation.json` with a `protocol_note` naming it:
+
+| Variable | Default | What it costs to lower |
+|---|---|---|
+| `DOCK_ENRICH_EXHAUSTIVENESS` | 32 | Little for ranking. Exhaustiveness 8, 16 and 32 agree to 0.01 kcal/mol on a test ligand, far inside what the scoring function resolves. |
+| `DOCK_ENRICH_N_SEEDS` | 3 | The per-ligand replicate error bars. The enrichment AUC's own uncertainty is the bootstrap CI over compounds, so the ranking is unaffected. |
+| `DOCK_EXHAUSTIVENESS`, `DOCK_N_SEEDS` | 32, 3 | These govern the steps that report an affinity as a number. Lower them only deliberately. |
+| `DOCK_N_PER_CLASS` | 50 | The power of the enrichment control. This is the setting the review raised from 12; leave it alone. |
+
+Results committed from a reduced run are marked as such and should be
+regenerated at the defaults before publication.
+
 ## 4. Determinism
 
 | Component | Reproducible? |
@@ -53,11 +83,23 @@ docking x `N_SEEDS` replicates x exhaustiveness 32), step 07 seconds.
 | RF / XGBoost fits | Yes, seeded |
 | Conformal quantiles, `tau` | Yes, deterministic given the split |
 | Bootstrap CIs | Yes, seeded |
-| AutoDock Vina | Yes per seed (`--seed 42 + i`); results are averaged over `N_SEEDS` |
+| Receptor preparation (Open Babel) | **No.** Polar hydrogens are added at an arbitrary rotation, so two consecutive runs differ by a few HD atoms |
+| AutoDock Vina | Yes per seed (`--seed 42 + i`) against a fixed receptor; results are averaged over `N_SEEDS` |
 
 Thread counts can change floating-point reduction order; differences should sit
 far inside the reported confidence intervals. If they do not, that is a finding
 worth reporting.
+
+The receptor row is the one real gap. Vina is deterministic given a seed and a
+receptor, but the receptor itself is not reproducible: `obabel -xr -p 7.4` places
+added hydrogens at an arbitrary rotation, and those HD atoms are exactly the
+hydrogen-bond donors the scoring function reads. So docking scores are
+reproducible within a run and only approximately across runs. The prepared
+`data/targets/*.pdbqt` are therefore not tracked, and
+`docking_validation.json` records the Open Babel version that built them. Pinning
+the receptor properly would mean preparing it once with a deterministic tool
+(PDB2PQR/PROPKA) and committing that, which is the same change limitation K7 asks
+for.
 
 ## 5. What a re-run changes
 

@@ -301,3 +301,151 @@ def test_report_sections_report_missing_inputs_rather_than_failing(tmp_path, mon
                     mod.docking_section()):
         assert "Not run" in section or "Regenerate" in section or "regenerate" in section
     assert isinstance(mod.limitations_section(), str)
+
+
+# ----------------------------------------------------------------------------
+# Redocking RMSD: the control must measure placement, not conformation
+# ----------------------------------------------------------------------------
+
+def _docking_module():
+    import importlib.util
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "scripts", "06_docking_validation.py")
+    spec = importlib.util.spec_from_file_location("docking06", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _embedded(smiles, seed=0xf00d):
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+    mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
+    params = AllChem.ETKDGv3()
+    params.randomSeed = seed
+    assert AllChem.EmbedMolecule(mol, params) == 0
+    return Chem.RemoveHs(mol)
+
+
+def test_redock_rmsd_is_measured_in_place_not_superimposed():
+    """A pose translated 8 A away is a failed prediction, however well it
+    superimposes. `GetBestRMS` would align it first and call it perfect, which is
+    how a pose in the wrong subpocket passes a 2 A criterion."""
+    from rdkit import Chem
+    from rdkit.Chem import rdMolTransforms  # noqa: F401  (import guard)
+    import numpy as np
+
+    mod = _docking_module()
+    ref = _embedded("CC(=O)Oc1ccccc1C(=O)O")
+
+    moved = Chem.Mol(ref)
+    conf = moved.GetConformer()
+    for i in range(moved.GetNumAtoms()):
+        p = conf.GetAtomPosition(i)
+        conf.SetAtomPosition(i, (p.x + 8.0, p.y, p.z))
+
+    in_place = mod.symmetry_corrected_rmsd(ref, moved)
+    superimposed = mod.symmetry_corrected_rmsd(ref, moved, superimpose=True)
+
+    assert in_place == pytest.approx(8.0, abs=1e-3), in_place
+    assert superimposed < 0.1, superimposed
+
+
+def test_rmsd_matches_molecules_whose_bond_orders_were_perceived_differently():
+    """The crystal reference and the Open Babel pose kekulise differently. Matching
+    on the heavy-atom graph is what makes the RMSD computable at all; before this
+    the control returned None for every target and reported it as a failed pose."""
+    from rdkit import Chem
+
+    mod = _docking_module()
+    ref = _embedded("c1ccccc1C(=O)[O-]")
+
+    scrambled = Chem.Mol(ref)
+    for b in scrambled.GetBonds():
+        b.SetIsAromatic(False)
+    for a in scrambled.GetAtoms():
+        a.SetIsAromatic(False)
+        a.SetFormalCharge(0)
+
+    rms = mod.symmetry_corrected_rmsd(ref, scrambled)
+    assert rms is not None
+    assert rms == pytest.approx(0.0, abs=1e-6)
+
+
+def test_rmsd_returns_none_for_a_different_molecule():
+    mod = _docking_module()
+    assert mod.symmetry_corrected_rmsd(_embedded("CCO"), _embedded("CCCCCCN")) is None
+
+
+def test_candidate_docking_names_step_05_when_there_is_no_screen(tmp_path, monkeypatch):
+    """With no screen at all the blocker is step 05, not step 07's annotation."""
+    mod = _docking_module()
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(mod.StaleScreenOutput) as excinfo:
+        mod.dock_consensus_candidates()
+    assert "05_screen_coconut_library" in str(excinfo.value)
+
+
+def test_candidate_docking_refuses_a_pre_rewrite_screen_output(tmp_path, monkeypatch):
+    """Step 06 reuses whatever screen output it finds. An old one names its hits
+    by a rule this work withdrew, so docking it would attach current scores to a
+    candidate list the current screen would not produce."""
+    import pandas as pd
+
+    mod = _docking_module()
+    preds = tmp_path / "results" / "predictions"
+    preds.mkdir(parents=True)
+    stale = pd.DataFrame({"identifier": ["CNP1"], "smiles": ["CCO"],
+                          "n_targets_confident": [3], "rediscovery_any": [False]})
+    stale.to_csv(preds / "consensus_hits_annotated.csv", index=False)
+    stale.to_csv(preds / "consensus_hits.csv", index=False)
+    monkeypatch.chdir(tmp_path)
+
+    with pytest.raises(mod.StaleScreenOutput) as excinfo:
+        mod.dock_consensus_candidates()
+    assert "interval_lower_bound_active" in str(excinfo.value)
+    assert "05_screen_coconut_library" in str(excinfo.value)
+
+
+def test_protocol_note_is_silent_at_the_defaults_and_names_every_override():
+    mod = _docking_module()
+    assert mod.protocol_note() is None
+
+    import importlib
+    os.environ["DOCK_ENRICH_N_SEEDS"] = "1"
+    try:
+        reduced = _docking_module()
+        note = reduced.protocol_note()
+        assert note is not None
+        assert "enrich_n_seeds 1 instead of 3" in note
+        assert "DOCK_ENRICH_N_SEEDS" in note
+    finally:
+        del os.environ["DOCK_ENRICH_N_SEEDS"]
+
+
+def test_bedroc_on_a_balanced_set_sits_inside_its_own_null():
+    """EF and BEDROC assume a large library with few actives. On a 50/50 control
+    a random ranking returns BEDROC near 0.5 with a wide spread, so the metric
+    must be read against its null rather than its usual thresholds."""
+    import numpy as np
+
+    labels = np.array([1] * 50 + [0] * 49)
+    rng = np.random.default_rng(7)
+    null = C.permutation_null(labels, rng.normal(size=99),
+                              lambda y, s: C.bedroc(y, s, 20.0), n_perm=400)
+    assert null is not None
+    assert 0.4 < null["null_mean"] < 0.6, null["null_mean"]
+    assert null["null_95pct"] > 0.7, null["null_95pct"]
+    assert not null["exceeds_null"]
+
+
+def test_permutation_null_flags_a_ranking_that_really_separates():
+    import numpy as np
+    from sklearn.metrics import roc_auc_score
+
+    labels = np.array([1] * 50 + [0] * 50)
+    perfect = np.concatenate([np.ones(50), np.zeros(50)])
+    null = C.permutation_null(labels, perfect, roc_auc_score, n_perm=400)
+    assert null["observed"] == pytest.approx(1.0)
+    assert null["exceeds_null"]
+    assert null["p_one_sided"] < 0.01
