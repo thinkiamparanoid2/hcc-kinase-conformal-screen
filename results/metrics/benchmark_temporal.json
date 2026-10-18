@@ -1,0 +1,17 @@
+{
+  "splits": {
+    "FGFR4": {
+      "status": "skipped",
+      "reason": "no publication year in curated data"
+    },
+    "EGFR": {
+      "status": "skipped",
+      "reason": "no publication year in curated data"
+    },
+    "VEGFR2": {
+      "status": "skipped",
+      "reason": "no publication year in curated data"
+    }
+  },
+  "note": "Temporal holdout: train on older literature, test on the most recent 20% by first publication year."
+}
