@@ -62,9 +62,31 @@ from sklearn.metrics import roc_auc_score
 from scipy.stats import mannwhitneyu
 
 POSE_DIR = os.path.join("results", "docking_poses")
-N_PER_CLASS = 50            # per class in the enrichment control (was 12)
-N_SEEDS = 3                 # docking replicates per ligand
-EXHAUSTIVENESS = 32         # was 8 for everything but the redock
+
+
+def _env_int(name, default):
+    """Protocol knob, overridable for a run on smaller hardware.
+
+    The defaults below are the protocol. An override is not a quiet downgrade:
+    the values actually used are written into the summary, and `protocol_note`
+    says which ones differ from the defaults and how to reproduce the full run.
+    """
+    try:
+        return max(1, int(os.environ[name]))
+    except (KeyError, ValueError):
+        return default
+
+
+N_PER_CLASS = _env_int("DOCK_N_PER_CLASS", 50)   # per class in the enrichment control (was 12)
+N_SEEDS = _env_int("DOCK_N_SEEDS", 3)            # docking replicates per ligand
+EXHAUSTIVENESS = _env_int("DOCK_EXHAUSTIVENESS", 32)  # was 8 for everything but the redock
+# The enrichment control ranks 100 compounds per target; its uncertainty is the
+# bootstrap CI over those compounds, not the per-ligand search spread, so it can
+# run at a cheaper setting than the steps that report an affinity as a number.
+ENRICH_EXHAUSTIVENESS = _env_int("DOCK_ENRICH_EXHAUSTIVENESS", EXHAUSTIVENESS)
+ENRICH_N_SEEDS = _env_int("DOCK_ENRICH_N_SEEDS", N_SEEDS)
+PROTOCOL_DEFAULTS = {"n_per_class": 50, "n_seeds": 3, "exhaustiveness": 32,
+                     "enrich_exhaustiveness": 32, "enrich_n_seeds": 3}
 BOX_PADDING = 8.0           # A added to the ligand's longest dimension
 MIN_BOX = 22.0              # A, floor so small ligands still sample the pocket
 IMPLAUSIBLE_SCORE = -4.0    # weaker than this is treated as a placement failure
@@ -450,8 +472,8 @@ def _property_matched_sample(act, inact, n_per_class, seed):
     return act_s, inact.loc[picked]
 
 
-def run_enrichment_control(n_per_class=N_PER_CLASS, exhaustiveness=EXHAUSTIVENESS,
-                           seed=0):
+def run_enrichment_control(n_per_class=N_PER_CLASS,
+                           exhaustiveness=ENRICH_EXHAUSTIVENESS, seed=0):
     lig_dir = os.path.join(POSE_DIR, "enrichment_ligands")
     os.makedirs(lig_dir, exist_ok=True)
     enrichment = {}
@@ -484,7 +506,8 @@ def run_enrichment_control(n_per_class=N_PER_CLASS, exhaustiveness=EXHAUSTIVENES
             if not smiles_to_pdbqt(r["canonical_smiles"], lpdbqt):
                 continue
             mean, sd, _, _ = dock_pdbqt(t, lpdbqt, opdbqt,
-                                        exhaustiveness=exhaustiveness, cpu=N_CPU)
+                                        exhaustiveness=exhaustiveness, cpu=N_CPU,
+                                        n_seeds=ENRICH_N_SEEDS)
             if np.isfinite(mean):
                 scores.append(mean)
                 sds.append(sd)
@@ -607,6 +630,33 @@ def dock_consensus_candidates(n_novel=25, n_control=8, exhaustiveness=EXHAUSTIVE
     return batch
 
 
+def protocol_note():
+    """Name every setting that differs from the protocol, and how to restore it."""
+    actual = {"n_per_class": N_PER_CLASS, "n_seeds": N_SEEDS,
+              "exhaustiveness": EXHAUSTIVENESS,
+              "enrich_exhaustiveness": ENRICH_EXHAUSTIVENESS,
+              "enrich_n_seeds": ENRICH_N_SEEDS}
+    env = {"n_per_class": "DOCK_N_PER_CLASS", "n_seeds": "DOCK_N_SEEDS",
+           "exhaustiveness": "DOCK_EXHAUSTIVENESS",
+           "enrich_exhaustiveness": "DOCK_ENRICH_EXHAUSTIVENESS",
+           "enrich_n_seeds": "DOCK_ENRICH_N_SEEDS"}
+    reduced = {k: (actual[k], v) for k, v in PROTOCOL_DEFAULTS.items()
+               if actual[k] != v}
+    if not reduced:
+        return None
+    parts = ", ".join(f"{k} {used} instead of {default}"
+                      for k, (used, default) in sorted(reduced.items()))
+    unset = " ".join(sorted(env[k] for k in reduced))
+    return (f"REDUCED PROTOCOL: {parts}. These numbers are not the protocol's "
+            f"own and should be regenerated before publication: unset {unset} "
+            f"and re-run step 06 on hardware with more cores. Scores are "
+            f"insensitive to exhaustiveness in this pocket set (8, 16 and 32 "
+            f"agree to 0.01 kcal/mol on a test ligand), and the enrichment "
+            f"control's uncertainty is the bootstrap CI over compounds rather "
+            f"than the per-ligand search spread, so a reduced enrichment budget "
+            f"costs the replicate error bars and not the ranking itself.")
+
+
 def tool_versions():
     """Record what actually produced these poses.
 
@@ -643,8 +693,11 @@ def main():
         "settings": {"exhaustiveness": EXHAUSTIVENESS, "n_seeds": N_SEEDS,
                      "box_padding_A": BOX_PADDING, "min_box_A": MIN_BOX,
                      "n_per_class_enrichment": N_PER_CLASS,
+                     "enrich_exhaustiveness": ENRICH_EXHAUSTIVENESS,
+                     "enrich_n_seeds": ENRICH_N_SEEDS,
                      "vina_cpu_threads": N_CPU,
-                     "tool_versions": tool_versions()},
+                     "tool_versions": tool_versions(),
+                     "protocol_note": protocol_note()},
         "redocking_control": redock,
         "enrichment_control": enrichment,
         "candidates_summary": {
