@@ -288,9 +288,11 @@ def main(targets=None, from_existing=False):
             path = os.path.join(C.LIGAND_DIR, f"{name}_IC50_training_data.csv")
             out.to_csv(path, index=False)
             C.save_json(summary, os.path.join(C.METRICS_DIR, f"curation_{name}.json"))
+            ceiling = summary.get("r2_ceiling_from_label_noise")
             print(f"[OK] {name}: {summary['n_raw_records']} rows -> {len(out)} parents "
                   f"(collapsed {summary['n_raw_records'] - len(out)}); "
-                  f"R2 ceiling {summary['r2_ceiling_from_label_noise']:.3f}")
+                  f"R2 ceiling "
+                  f"{'unknown (pre-aggregated input)' if ceiling is None else f'{ceiling:.3f}'}")
         return {"status": "recurated existing csvs"}
     for name in (targets or C.TARGETS):
         cid = C.TARGET_CHEMBL_IDS[name]
@@ -308,9 +310,11 @@ def main(targets=None, from_existing=False):
               f"censored-potent {summary['n_censored_lower_bound_potency']} | "
               f"censored-inactive {summary['n_censored_upper_bound_potency']} | "
               f"dropped noisy {summary['n_dropped_replicate_sd_above_threshold']}")
+        ceiling = summary.get("r2_ceiling_from_label_noise")
         print(f"     active prevalence among exact labels: "
               f"{summary['exact_active_prevalence_at_pIC50_6']:.3f} | "
-              f"R2 ceiling from label noise: {summary['r2_ceiling_from_label_noise']:.3f}")
+              f"R2 ceiling from label noise: "
+              f"{'unknown' if ceiling is None else f'{ceiling:.3f}'}")
     return {"status": "chembl fetch complete"}
 
 
