@@ -521,6 +521,30 @@ def docking_section():
         })
     if erows:
         lines.append(md_table(pd.DataFrame(erows), "{:.3f}") + "\n")
+        # State the per-target verdict explicitly. Three AUCs, one of which is
+        # below chance, invite an average; an average of these would describe no
+        # pocket and would overstate every one of them.
+        ok = [(t, (dv["enrichment_control"][t])) for t in C.TARGETS
+              if isinstance((dv.get("enrichment_control") or {}).get(t), dict)
+              and dv["enrichment_control"][t].get("status") == "ok"]
+        above = [t for t, ec in ok
+                 if (ec.get("docking_ROC_AUC_CI95") or {}).get("lo", 0) > 0.5]
+        below = [t for t, ec in ok if (ec.get("docking_ROC_AUC") or 0) < 0.5]
+        if ok:
+            verdict = (f"Docking enrichment is target-dependent and is not "
+                       f"established here as a general filter. Of {len(ok)} pockets, "
+                       f"{len(above) if above else 'none'}"
+                       f"{' (' + ', '.join(above) + ')' if above else ''} "
+                       f"separate actives from the negative class with a 95% CI "
+                       f"entirely above 0.5.")
+            if below:
+                verdict += (f" {', '.join(below)} scores below 0.5, i.e. the "
+                            f"ranking is if anything inverted there. ")
+            verdict += ("These are not averaged: a mean over three pockets would "
+                        "describe none of them. A pocket where docking does not "
+                        "enrich cannot be used to corroborate a prediction for a "
+                        "compound in that pocket.")
+            lines.append(f"> **Verdict.** {verdict}\n")
         sampling = next((ec.get("sampling") for ec in
                          (dv.get("enrichment_control") or {}).values()
                          if isinstance(ec, dict) and ec.get("sampling")), None)
