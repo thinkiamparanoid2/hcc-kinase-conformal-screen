@@ -37,7 +37,7 @@ Status: **fixed** (addressed in code), **mitigated** (reduced and reported),
 | C2 | The NP domain-shift claim rested on 20–43 molecules | mitigated | Subsets under 20 report no metric at all; the rest carry bootstrap CIs. The claim is stated as a direction, not a point estimate. |
 | C3 | `MIN_CAL_PER_BIN = 30` makes a 90% quantile equal to the maximum residual | fixed | Raised to 150; each bin reports its conformal level, its own coverage and a CI. |
 | C4 | `tau` was derived by a top-down scan that assumed monotone half-widths | fixed | Isotonic (non-increasing) fit, bootstrap CI, and a `tau ± 0.1` sensitivity table. |
-| C5 | The library sits almost entirely in the lowest, least-calibrated similarity bin | open | Reported as a finding: the AD-admissible fraction of the library is small, and that is the measurement the paper makes. |
+| C5 | The library sits almost entirely in the lowest, least-calibrated similarity bin | open | Reported as a finding, and treated as a cap on the claim: only the AD-admissible fraction of the library can be put forward as candidates, and that fraction is small. Compounds outside the domain are kept in the output files with their predictions marked as extrapolation, never promoted to the candidate list. |
 
 ## Screening
 
@@ -69,3 +69,4 @@ Status: **fixed** (addressed in code), **mitigated** (reduced and reported),
 | G1 | No experimental validation of any predicted compound | open |
 | G2 | No ADMET, developability or natural-product sourcing assessment beyond PAINS and QED | open |
 | G3 | Rigid-receptor docking captures no induced fit | open |
+| G4 | The candidate list this framing promises has not been generated since the pipeline was rebuilt: steps 05 and 06 need the COCONUT library and `vina` / `obabel`, and their report sections are withheld until they are re-run | open |

@@ -1,20 +1,29 @@
 # Domain-Calibrated QSAR and Structure-Based Screening of Natural Products Against HCC Kinases
 
-How far does a conformal applicability domain, calibrated on synthetic kinase
-inhibitors, transfer to natural-product chemical space?
+Which natural products are credible inhibitor candidates against the receptor
+tyrosine kinases that drive hepatocellular carcinoma, and how much confidence does
+the evidence actually support?
 
-This repository answers that question for three hepatocellular carcinoma receptor
-tyrosine kinases — **EGFR** (`1M17`), **FGFR4** (`5JKG`) and **VEGFR2** (`4ASD`) —
-by combining scaffold-split QSAR, Mondrian split-conformal calibration, a
-full-library COCONUT natural-product screen, and orthogonal AutoDock Vina
-validation.
+This repository screens the COCONUT natural-product library against three HCC
+receptor tyrosine kinases - **EGFR** (`1M17`), **FGFR4** (`5JKG`) and **VEGFR2**
+(`4ASD`) - with scaffold-split QSAR, Mondrian split-conformal calibration,
+scaffold-level novelty filtering and orthogonal AutoDock Vina validation, and
+reports the surviving compounds as prioritised candidates.
 
-The central result is a measurement, not a candidate list: the conformal guarantee
-established on held-out ChEMBL scaffolds **does not transfer** to natural products,
-because the two populations are not exchangeable. The pipeline quantifies the
-resulting loss of coverage, reports the fraction of a 738k-compound library that is
-admissible under a calibrated applicability domain, and treats the surviving
-compounds as a worked example rather than as a discovery claim.
+The conformal applicability domain is what makes that candidate list defensible
+rather than decorative. It states, per compound, whether the model is being asked
+to predict inside the chemistry it was calibrated on, and that gate is applied
+before any compound is called a candidate. Its limits are measured rather than
+assumed: the coverage guarantee established on held-out ChEMBL scaffolds does not
+transfer to natural products, so the intervals carried into the screen are an
+extrapolated error model and are labelled that way wherever they appear.
+
+> **The candidate list is not in this repository yet.** Steps 05 and 06 - the
+> full-library screen and the docking validation - have not been run since the
+> pipeline was rebuilt, so those sections of the report are withheld rather than
+> filled with numbers the current code never produced. Run them (see
+> [`docs/REPRODUCE.md`](docs/REPRODUCE.md)) to produce the results this framing
+> promises.
 
 ---
 
@@ -92,7 +101,7 @@ conda env create -f environment.yml && conda activate hcc-screen
 
 # or: pip install -r requirements.txt   (steps 01-05 and 07 only)
 
-pytest -q                          # 22 unit tests, no external data needed
+pytest -q                          # 24 unit tests, no external data needed
 python scripts/run_pipeline.py --list
 python scripts/run_pipeline.py     # full pipeline, checkpointed and resumable
 ```
