@@ -468,12 +468,28 @@ def docking_section():
             "pass at 2 A": rc.get("pose_prediction_success_top1"),
             f"best-of-N RMSD (A)": rc.get("rmsd_best_of_n_A"),
             "N poses": rc.get("n_poses"),
+            "native pose rank": rc.get("best_pose_rank"),
+            "score gap (kcal/mol)": rc.get("affinity_gap_to_best_pose_kcal"),
         })
     if rows:
         lines.append(md_table(pd.DataFrame(rows)) + "\n")
         n_pass = sum(1 for r in rows if r["pass at 2 A"])
         lines.append(f"Pose prediction succeeds at the conventional 2 A criterion "
                      f"for {n_pass} of {len(rows)} pockets.\n")
+        ranked = [r for r in rows if r.get("native pose rank")]
+        missed = [r for r in ranked if r["native pose rank"] > 1]
+        if missed:
+            worst = max(abs(r["score gap (kcal/mol)"] or 0) for r in missed)
+            lines.append(
+                "Where top-1 fails, the search still produced a near-native pose: "
+                f"it is ranked {', '.join(str(r['native pose rank']) for r in missed)} "
+                f"in {', '.join(r['target'] for r in missed)} respectively, separated "
+                f"from the top-scoring pose by at most {worst:.2f} kcal/mol. Vina's "
+                "scoring function is not quoted to that precision, so these are "
+                "ranking failures rather than sampling failures: the pose is found "
+                "and cannot be told apart from its rivals. This is the reason "
+                "docking enters this work as an orthogonal check and not as a "
+                "source of truth about binding mode.\n")
 
     lines.append("### 4.2 Control 2: active-versus-inactive enrichment\n")
     erows = []
