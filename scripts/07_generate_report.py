@@ -515,6 +515,9 @@ def docking_section():
             "AUC 95% CI": ci_str(ec.get("docking_ROC_AUC_CI95")),
             "EF1%": ec.get("EF1pct"), "EF5%": ec.get("EF5pct"),
             "BEDROC": ec.get("BEDROC_alpha20"),
+            "beats chance": ", ".join(
+                k for k, v in (ec.get("null_baselines") or {}).items()
+                if isinstance(v, dict) and v.get("exceeds_null")) or "none",
         })
     if erows:
         lines.append(md_table(pd.DataFrame(erows), "{:.3f}") + "\n")
@@ -526,6 +529,30 @@ def docking_section():
         inactive_class = next((ec.get("inactive_class") for ec in
                                (dv.get("enrichment_control") or {}).values()
                                if isinstance(ec, dict) and ec.get("inactive_class")), None)
+        caveat = next((ec.get("metric_caveat") for ec in
+                       (dv.get("enrichment_control") or {}).values()
+                       if isinstance(ec, dict) and ec.get("metric_caveat")), None)
+        if caveat:
+            lines.append(f"> **How to read these metrics.** {caveat}\n")
+            null_rows = []
+            for t in C.TARGETS:
+                ec = (dv.get("enrichment_control") or {}).get(t) or {}
+                for metric, nb in (ec.get("null_baselines") or {}).items():
+                    if not isinstance(nb, dict):
+                        continue
+                    null_rows.append({
+                        "target": t, "metric": metric,
+                        "observed": nb.get("observed"),
+                        "random mean": nb.get("null_mean"),
+                        "random 5-95%": f"{nb.get('null_5pct')} - {nb.get('null_95pct')}",
+                        "p": nb.get("p_one_sided"),
+                        "outside null": nb.get("exceeds_null"),
+                    })
+            if null_rows:
+                lines.append("Each metric against a label-shuffled null on the "
+                             "same design:\n")
+                lines.append(md_table(pd.DataFrame(null_rows)) + "\n")
+
         if inactive_class:
             lines.append(
                 f"> **What the negative class is.** {inactive_class}. This matters "

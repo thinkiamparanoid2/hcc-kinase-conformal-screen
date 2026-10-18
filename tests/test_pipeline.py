@@ -412,3 +412,31 @@ def test_protocol_note_is_silent_at_the_defaults_and_names_every_override():
         assert "DOCK_ENRICH_N_SEEDS" in note
     finally:
         del os.environ["DOCK_ENRICH_N_SEEDS"]
+
+
+def test_bedroc_on_a_balanced_set_sits_inside_its_own_null():
+    """EF and BEDROC assume a large library with few actives. On a 50/50 control
+    a random ranking returns BEDROC near 0.5 with a wide spread, so the metric
+    must be read against its null rather than its usual thresholds."""
+    import numpy as np
+
+    labels = np.array([1] * 50 + [0] * 49)
+    rng = np.random.default_rng(7)
+    null = C.permutation_null(labels, rng.normal(size=99),
+                              lambda y, s: C.bedroc(y, s, 20.0), n_perm=400)
+    assert null is not None
+    assert 0.4 < null["null_mean"] < 0.6, null["null_mean"]
+    assert null["null_95pct"] > 0.7, null["null_95pct"]
+    assert not null["exceeds_null"]
+
+
+def test_permutation_null_flags_a_ranking_that_really_separates():
+    import numpy as np
+    from sklearn.metrics import roc_auc_score
+
+    labels = np.array([1] * 50 + [0] * 50)
+    perfect = np.concatenate([np.ones(50), np.zeros(50)])
+    null = C.permutation_null(labels, perfect, roc_auc_score, n_perm=400)
+    assert null["observed"] == pytest.approx(1.0)
+    assert null["exceeds_null"]
+    assert null["p_one_sided"] < 0.01

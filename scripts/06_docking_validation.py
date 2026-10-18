@@ -554,6 +554,26 @@ def run_enrichment_control(n_per_class=N_PER_CLASS,
             "mannwhitney_p": round(float(mannwhitneyu(
                 ranking[labels == 1], ranking[labels == 0],
                 alternative="greater").pvalue), 5),
+            # Each ranking metric against its own null on this design. EF and
+            # BEDROC were built for a large library with a small active fraction;
+            # on a balanced control they can sit inside the noise while reading
+            # like a result, so none of them is quoted bare.
+            "null_baselines": {
+                "ROC_AUC": C.permutation_null(labels, ranking, roc_auc_score),
+                "EF1pct": C.permutation_null(
+                    labels, ranking, lambda y, sc: C.enrichment_factor(y, sc, 0.01)),
+                "EF5pct": C.permutation_null(
+                    labels, ranking, lambda y, sc: C.enrichment_factor(y, sc, 0.05)),
+                "BEDROC_alpha20": C.permutation_null(
+                    labels, ranking, lambda y, sc: C.bedroc(y, sc, 20.0)),
+            },
+            "metric_caveat": (
+                f"Top 1% of {len(labels)} compounds is "
+                f"{max(1, round(0.01 * len(labels)))} compound, and the active "
+                f"fraction is {labels.mean():.2f}, not the ~1% that EF and BEDROC "
+                "were designed for. Read each metric against its null_baselines "
+                "entry: exceeds_null is whether the value falls outside the middle "
+                "90% of what a random ranking gives on this same design."),
             "secs": round(time.time() - t0, 1),
         }
         e = enrichment[t]
