@@ -132,21 +132,59 @@ def _mol_from_pdbqt_model(pdbqt_path, model_index, obabel):
     return mol
 
 
-def symmetry_corrected_rmsd(ref_mol, probe_mol):
-    """Heavy-atom RMSD with substructure matching and symmetry handling.
+def _flatten_graph(mol):
+    """Copy with every bond single and all aromaticity, charges and implicit Hs
+    cleared.
 
-    `GetBestRMS` enumerates symmetry-equivalent atom mappings, which a positional
-    element-wise RMSD cannot do. Returns None when the two molecules do not match,
+    The reference comes from a PDB and the pose comes back through Open Babel, so
+    the two perceive bond orders differently for the same molecule: kekulised vs
+    aromatic rings, a carboxylate drawn -1 on one side and neutral on the other.
+    `GetSubstructMatch` then finds nothing and the RMSD silently comes back None.
+    An RMSD only needs the heavy-atom graph, so matching on connectivity and
+    element alone is the correct comparison, not a workaround.
+    """
+    rw = Chem.RWMol(Chem.Mol(mol))
+    for b in rw.GetBonds():
+        b.SetBondType(Chem.BondType.SINGLE)
+        b.SetIsAromatic(False)
+    for a in rw.GetAtoms():
+        a.SetIsAromatic(False)
+        a.SetNoImplicit(True)
+        a.SetNumExplicitHs(0)
+        a.SetFormalCharge(0)
+    out = rw.GetMol()
+    Chem.SanitizeMol(out, Chem.SanitizeFlags.SANITIZE_SYMMRINGS |
+                          Chem.SanitizeFlags.SANITIZE_ADJUSTHS,
+                     catchErrors=True)
+    return out
+
+
+def symmetry_corrected_rmsd(ref_mol, probe_mol, superimpose=False):
+    """Heavy-atom RMSD between two poses, symmetry-corrected.
+
+    `superimpose=False` (the control) is `CalcRMS`: the pose is compared where
+    docking actually put it. `superimpose=True` is `GetBestRMS`, which rotates and
+    translates the pose onto the reference first and is therefore NOT a
+    pose-prediction metric -- it answers a different question, whether the internal
+    conformation is right once placement is ignored. Quoting a superimposed number
+    as the redocking control turns a pose docked into the wrong subpocket into an
+    apparent success: in this repository's own run, EGFR erlotinib is 8.0 A in
+    place and 1.8 A superimposed.
+
+    Both enumerate symmetry-equivalent atom mappings, which an element-wise
+    positional RMSD cannot do. Returns None when the two molecules do not match,
     which is itself diagnostic (a failed conversion, not a good or bad pose).
     """
     if ref_mol is None or probe_mol is None:
         return None
     try:
-        ref = Chem.RemoveHs(Chem.Mol(ref_mol), sanitize=False)
-        probe = Chem.RemoveHs(Chem.Mol(probe_mol), sanitize=False)
+        ref = _flatten_graph(Chem.RemoveHs(Chem.Mol(ref_mol), sanitize=False))
+        probe = _flatten_graph(Chem.RemoveHs(Chem.Mol(probe_mol), sanitize=False))
         if ref.GetNumAtoms() != probe.GetNumAtoms():
             return None
-        return float(rdMolAlign.GetBestRMS(probe, ref))
+        if superimpose:
+            return float(rdMolAlign.GetBestRMS(Chem.Mol(probe), Chem.Mol(ref)))
+        return float(rdMolAlign.CalcRMS(probe, ref))
     except Exception:
         return None
 
@@ -237,10 +275,11 @@ def prepare_receptors_and_redock(exhaustiveness=EXHAUSTIVENESS):
 
         ref_mol = Chem.MolFromPDBFile(lig_pdb, sanitize=False, removeHs=True)
         docked = parse_pdbqt_models(out_pdbqt)
-        rmsds = []
+        rmsds, aligned = [], []
         for i in range(len(docked)):
             probe = _mol_from_pdbqt_model(out_pdbqt, i, obabel)
             rmsds.append(symmetry_corrected_rmsd(ref_mol, probe))
+            aligned.append(symmetry_corrected_rmsd(ref_mol, probe, superimpose=True))
         valid = [r for r in rmsds if r is not None]
 
         redock[t] = {
@@ -253,9 +292,17 @@ def prepare_receptors_and_redock(exhaustiveness=EXHAUSTIVENESS):
             # only, and is never the number a redocking control should quote.
             "rmsd_top1_A": round(rmsds[0], 3) if rmsds and rmsds[0] is not None else None,
             "rmsd_best_of_n_A": round(min(valid), 3) if valid else None,
+            # Placement ignored: right conformer in the wrong place still scores
+            # well here, so this is a diagnostic and never the control.
+            "rmsd_top1_superimposed_A": (
+                round(aligned[0], 3) if aligned and aligned[0] is not None else None),
             "n_poses": len(docked),
             "n_rmsd_computed": len(valid),
-            "rmsd_method": "RDKit GetBestRMS (symmetry-corrected, heavy atoms)",
+            "rmsd_method": ("RDKit CalcRMS, symmetry-corrected heavy atoms, "
+                            "in place (no superposition); the molecules are matched "
+                            "on the heavy-atom graph because the crystal reference "
+                            "and the Open Babel pose perceive bond orders "
+                            "differently"),
             "pose_prediction_success_top1": (
                 bool(rmsds[0] is not None and rmsds[0] <= 2.0) if rmsds else None),
             "secs": round(time.time() - t0, 1),
@@ -263,7 +310,8 @@ def prepare_receptors_and_redock(exhaustiveness=EXHAUSTIVENESS):
         r = redock[t]
         print(f"  [Redock {t}] {cfg['lig_name']}: top-1 RMSD = {r['rmsd_top1_A']} A "
               f"({'PASS' if r['pose_prediction_success_top1'] else 'FAIL'} at 2 A), "
-              f"best-of-{r['n_poses']} = {r['rmsd_best_of_n_A']} A", flush=True)
+              f"best-of-{r['n_poses']} = {r['rmsd_best_of_n_A']} A, "
+              f"superimposed = {r['rmsd_top1_superimposed_A']} A", flush=True)
     return redock
 
 
