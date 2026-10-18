@@ -447,14 +447,17 @@ def docking_section():
     versions = settings.get("tool_versions") or {}
     if versions:
         lines.append("_Produced by " + ", ".join(
-            f"{k.replace('_', ' ')} {v}" for k, v in sorted(versions.items())) +
+            str(v) for _, v in sorted(versions.items())) +
             f", {settings.get('vina_cpu_threads')} threads per docking._\n")
     lines += [
         f"Boxes are centred on the co-crystal ligand heavy-atom centroid in chain A "
         f"and sized to the ligand (minimum {settings.get('min_box_A')} A, "
         f"{settings.get('box_padding_A')} A padding), pH 7.4 protonation, Gasteiger "
-        f"charges, exhaustiveness {settings.get('exhaustiveness')}, "
-        f"{settings.get('n_seeds')} seeds per docking.\n",
+        f"charges. Redocking and candidate docking: exhaustiveness "
+        f"{settings.get('exhaustiveness')}, {settings.get('n_seeds')} seeds per "
+        f"docking. Enrichment control: exhaustiveness "
+        f"{settings.get('enrich_exhaustiveness')}, "
+        f"{settings.get('enrich_n_seeds')} seed(s).\n",
         f"> **Score comparability.** {dv.get('score_comparability_note', '')}\n",
         "### 4.1 Control 1: co-crystal redocking (pose prediction)\n",
         "Top-1 RMSD is the control: it is what the method would produce "
@@ -488,8 +491,9 @@ def docking_section():
             worst = max(abs(r["score gap (kcal/mol)"] or 0) for r in missed)
             lines.append(
                 "Where top-1 fails, the search still produced a near-native pose: "
-                f"it is ranked {', '.join(str(r['native pose rank']) for r in missed)} "
-                f"in {', '.join(r['target'] for r in missed)} respectively, separated "
+                + ", ".join(f"{r['target']} ranks it {r['native pose rank']}"
+                            for r in missed)
+                + f", separated "
                 f"from the top-scoring pose by at most {worst:.2f} kcal/mol. Vina's "
                 "scoring function is not quoted to that precision, so these are "
                 "ranking failures rather than sampling failures: the pose is found "
@@ -521,30 +525,50 @@ def docking_section():
         })
     if erows:
         lines.append(md_table(pd.DataFrame(erows), "{:.3f}") + "\n")
-        # State the per-target verdict explicitly. Three AUCs, one of which is
-        # below chance, invite an average; an average of these would describe no
-        # pocket and would overstate every one of them.
-        ok = [(t, (dv["enrichment_control"][t])) for t in C.TARGETS
+        # State the per-target verdict explicitly, and separate the two things
+        # these metrics measure. AUC is global separation; EF and BEDROC are
+        # early recognition, which is what a screen actually uses. A pocket can
+        # have one without the other, and averaging the three AUCs would
+        # describe no pocket while overstating every one of them.
+        ok = [(t, dv["enrichment_control"][t]) for t in C.TARGETS
               if isinstance((dv.get("enrichment_control") or {}).get(t), dict)
               and dv["enrichment_control"][t].get("status") == "ok"]
-        above = [t for t, ec in ok
-                 if (ec.get("docking_ROC_AUC_CI95") or {}).get("lo", 0) > 0.5]
-        below = [t for t, ec in ok if (ec.get("docking_ROC_AUC") or 0) < 0.5]
+
+        def _beats(ec, metric):
+            nb = (ec.get("null_baselines") or {}).get(metric)
+            return bool(isinstance(nb, dict) and nb.get("exceeds_null"))
+
+        global_sep = [t for t, ec in ok if _beats(ec, "ROC_AUC")]
+        early = [t for t, ec in ok
+                 if _beats(ec, "EF5pct") or _beats(ec, "BEDROC_alpha20")]
+        inverted = [t for t, ec in ok if (ec.get("docking_ROC_AUC") or 0) < 0.5]
+        n_tests = sum(len(ec.get("null_baselines") or {}) for _, ec in ok)
+
         if ok:
-            verdict = (f"Docking enrichment is target-dependent and is not "
-                       f"established here as a general filter. Of {len(ok)} pockets, "
-                       f"{len(above) if above else 'none'}"
-                       f"{' (' + ', '.join(above) + ')' if above else ''} "
-                       f"separate actives from the negative class with a 95% CI "
-                       f"entirely above 0.5.")
-            if below:
-                verdict += (f" {', '.join(below)} scores below 0.5, i.e. the "
-                            f"ranking is if anything inverted there. ")
-            verdict += ("These are not averaged: a mean over three pockets would "
-                        "describe none of them. A pocket where docking does not "
-                        "enrich cannot be used to corroborate a prediction for a "
-                        "compound in that pocket.")
-            lines.append(f"> **Verdict.** {verdict}\n")
+            bits = [f"Docking enrichment is target-dependent and is not "
+                    f"established here as a general filter."]
+            bits.append(
+                f"Global separation (AUC outside its null): "
+                f"{', '.join(global_sep) if global_sep else 'none'}.")
+            bits.append(
+                f"Early recognition (EF5% or BEDROC outside its null): "
+                f"{', '.join(early) if early else 'none'}.")
+            if inverted:
+                bits.append(
+                    f"{', '.join(inverted)} scores below 0.5, so the ranking is "
+                    f"there if anything inverted.")
+            bits.append(
+                f"The two are different claims and no pocket has both, so the "
+                f"result is not one effect seen three times. With {n_tests} "
+                f"null comparisons in this table and EF5% and BEDROC strongly "
+                f"correlated, a single metric clearing its null in a single "
+                f"pocket is weak evidence on its own; treat it as a direction to "
+                f"confirm on a larger set, not as a validated filter.")
+            bits.append(
+                "These are not averaged. A pocket where docking does not enrich "
+                "cannot corroborate a prediction for a compound in that pocket.")
+            lines.append("> **Verdict.** " + " ".join(bits) + "\n")
+
         sampling = next((ec.get("sampling") for ec in
                          (dv.get("enrichment_control") or {}).values()
                          if isinstance(ec, dict) and ec.get("sampling")), None)

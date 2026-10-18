@@ -283,7 +283,66 @@ _Not run. Produce it with:_ `python scripts/05_screen_coconut_library.py`
 
 ## 4. Orthogonal structure-based validation (AutoDock Vina)
 
-_The docking outputs in this repository predate the current validation protocol: they report best-of-N rather than top-1 RMSD without symmetry correction, a 12-vs-12 enrichment control drawn from potency extremes, and cross-receptor score comparisons. They are withheld here. Regenerate with:_ `python scripts/06_docking_validation.py` _(needs `vina` and `obabel`; see `docs/REPRODUCE.md`)._
+> **REDUCED PROTOCOL: enrich_exhaustiveness 8 instead of 32, enrich_n_seeds 1 instead of 3. These numbers are not the protocol's own and should be regenerated before publication: unset DOCK_ENRICH_EXHAUSTIVENESS DOCK_ENRICH_N_SEEDS and re-run step 06 on hardware with more cores. Scores are insensitive to exhaustiveness in this pocket set (8, 16 and 32 agree to 0.01 kcal/mol on a test ligand), and the enrichment control's uncertainty is the bootstrap CI over compounds rather than the per-ligand search spread, so a reduced enrichment budget costs the replicate error bars and not the ranking itself.**
+
+_Produced by Open Babel 3.1.0 -- Feb 17 2026 -- 06:48:53, AutoDock Vina v1.2.5, 4 threads per docking._
+
+Boxes are centred on the co-crystal ligand heavy-atom centroid in chain A and sized to the ligand (minimum 22.0 A, 8.0 A padding), pH 7.4 protonation, Gasteiger charges. Redocking and candidate docking: exhaustiveness 32, 3 seeds per docking. Enrichment control: exhaustiveness 8, 1 seed(s).
+
+> **Score comparability.** AutoDock Vina scores are empirical and receptor-specific. They are not transferable binding free energies, so a weaker score in one pocket than another is not evidence of selectivity. Compare within a target (see the <T>_vina_z columns), and treat any score weaker than -4.0 kcal/mol as a placement failure to investigate, not as a measured steric clash.
+
+### 4.1 Control 1: co-crystal redocking (pose prediction)
+
+Top-1 RMSD is the control: it is what the method would produce prospectively. Best-of-N is a sampling diagnostic and is reported only beside it.
+
+| target | ligand | box (A) | Vina top-1 (kcal/mol) | top-1 RMSD (A) | pass at 2 A | best-of-N RMSD (A) | N poses | native pose rank | score gap (kcal/mol) |
+|---|---|---|---|---|---|---|---|---|---|
+| FGFR4 | BLU9931-analog (6LF) | 22.000 | -8.550 | 6.499 | False | 2.314 | 9 | 8 | -0.945 |
+| EGFR | Erlotinib (AQ4) | 23.800 | -7.839 | 8.004 | False | 1.286 | 9 | 3 | -0.075 |
+| VEGFR2 | Sorafenib (BAX) | 27.000 | -12.223 | 0.561 | True | 0.561 | 8 | 1 | 0.000 |
+
+Pose prediction succeeds at the conventional 2 A criterion for 1 of 3 pockets.
+
+Where top-1 fails, the search still produced a near-native pose: FGFR4 ranks it 8, EGFR ranks it 3, separated from the top-scoring pose by at most 0.94 kcal/mol. Vina's scoring function is not quoted to that precision, so these are ranking failures rather than sampling failures: the pose is found and cannot be told apart from its rivals. This is the reason docking enters this work as an orthogonal check and not as a source of truth about binding mode.
+
+### 4.2 Control 2: active-versus-inactive enrichment
+
+| target | n act / n inact | active mean | inactive mean | ROC-AUC | AUC 95% CI | EF1% | EF5% | BEDROC | beats chance |
+|---|---|---|---|---|---|---|---|---|---|
+| FGFR4 | 50 / 49 | -8.950 | -8.620 | 0.623 | [0.515, 0.730] | 0.000 | 1.580 | 0.721 | ROC_AUC |
+| EGFR | 50 / 50 | -9.220 | -9.370 | 0.416 | [0.304, 0.535] | 2.000 | 1.200 | 0.565 | none |
+| VEGFR2 | 49 / 50 | -9.650 | -9.460 | 0.536 | [0.417, 0.658] | 2.020 | 2.020 | 0.790 | EF5pct, BEDROC_alpha20 |
+
+> **Verdict.** Docking enrichment is target-dependent and is not established here as a general filter. Global separation (AUC outside its null): FGFR4. Early recognition (EF5% or BEDROC outside its null): VEGFR2. EGFR scores below 0.5, so the ranking is there if anything inverted. The two are different claims and no pocket has both, so the result is not one effect seen three times. With 12 null comparisons in this table and EF5% and BEDROC strongly correlated, a single metric clearing its null in a single pocket is weak evidence on its own; treat it as a direction to confirm on a larger set, not as a validated filter. These are not averaged. A pocket where docking does not enrich cannot corroborate a prediction for a compound in that pocket.
+
+_Sampling: random within class, MW-matched; NOT potency extremes._
+
+> **How to read these metrics.** Top 1% of 99 compounds is 1 compound, and the active fraction is 0.51, not the ~1% that EF and BEDROC were designed for. Read each metric against its null_baselines entry: exceeds_null is whether the value falls outside the middle 90% of what a random ranking gives on this same design.
+
+Each metric against a label-shuffled null on the same design:
+
+| target | metric | observed | random mean | random 5-95% | p | outside null |
+|---|---|---|---|---|---|---|
+| FGFR4 | ROC_AUC | 0.623 | 0.500 | 0.4067 - 0.5972 | 0.018 | True |
+| FGFR4 | EF1pct | 0.000 | 0.978 | 0.0 - 1.98 | 1.000 | False |
+| FGFR4 | EF5pct | 1.584 | 0.998 | 0.396 - 1.584 | 0.174 | False |
+| FGFR4 | BEDROC_alpha20 | 0.721 | 0.503 | 0.263 - 0.7431 | 0.071 | False |
+| EGFR | ROC_AUC | 0.416 | 0.499 | 0.4012 - 0.5972 | 0.923 | False |
+| EGFR | EF1pct | 2.000 | 0.984 | 0.0 - 2.0 | 0.492 | False |
+| EGFR | EF5pct | 1.200 | 0.984 | 0.4 - 1.6 | 0.482 | False |
+| EGFR | BEDROC_alpha20 | 0.565 | 0.494 | 0.245 - 0.7492 | 0.329 | False |
+| VEGFR2 | ROC_AUC | 0.536 | 0.500 | 0.4065 - 0.5941 | 0.273 | False |
+| VEGFR2 | EF1pct | 2.020 | 0.987 | 0.0 - 2.0204 | 0.488 | False |
+| VEGFR2 | EF5pct | 2.020 | 1.004 | 0.4041 - 1.6163 | 0.028 | True |
+| VEGFR2 | BEDROC_alpha20 | 0.790 | 0.497 | 0.2559 - 0.7441 | 0.024 | True |
+
+> **What the negative class is.** measured weak binders; no censored '>' records in the committed data, so re-run step 01 with network access to populate a true inactive class. This matters for how the AUC reads: a true inactive is a `>` record, where the assay ran and found nothing, whereas a measured weak binder still occupies the pocket. Discriminating actives from weak binders is the harder task, so an AUC measured this way understates what the same control would give against true non-binders, and is not comparable to a published enrichment that used decoys.
+
+### 4.3 Candidate docking
+
+_Not available. The two controls above stand on their own: they need only the co-crystal structures and the curated training sets. Docking the candidate shortlist needs a current full-library screen, and there is none in this repository._
+
+_Reason: results/predictions/consensus_hits.csv missing: there is no full-library screen to take candidates from. Run `python scripts/05_screen_coconut_library.py` (needs the COCONUT library; see data/README.md), then step 07 to annotate the shortlist._
 
 ## 5. Limitations
 
@@ -296,5 +355,9 @@ _The docking outputs in this repository predate the current validation protocol:
 - The NP-like held-out subset is small (n = 20 for FGFR4); its metrics carry wide confidence intervals and support a direction, not a point claim.
 
 - The applicability-domain threshold is non-binding for FGFR4: tau sits at the lowest similarity bin: at a 1.65 pIC50 width budget every calibration bin qualifies, so the applicability domain excludes nothing and the gate is vacuous for this target. With this calibration set, bins wide enough for a stable 90% quantile are too wide to resolve a threshold. See tau_by_budget for what a tighter budget would give. Any in-domain hit count for this target is therefore a count of the whole library, not of a calibrated-reliable subset.
+
+- Top-1 redocking fails the 2 A criterion for EGFR, FGFR4, so pose-level conclusions in those pockets are not supported.
+
+- AutoDock Vina scores are empirical and receptor-specific. They are not transferable binding free energies, so a weaker score in one pocket than another is not evidence of selectivity. Compare within a target (see the <T>_vina_z columns), and treat any score weaker than -4.0 kcal/mol as a placement failure to investigate, not as a measured steric clash.
 
 - No experimental validation. Every candidate is a computational prediction and the paper claims nothing beyond that.
