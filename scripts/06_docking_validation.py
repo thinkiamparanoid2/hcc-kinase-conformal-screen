@@ -531,6 +531,18 @@ def run_enrichment_control(n_per_class=N_PER_CLASS,
             "active_threshold_pIC50": 7.0,
             "inactive_threshold_pIC50": 5.0,
             "sampling": "random within class, MW-matched; NOT potency extremes",
+            # What the negative class actually is. A true inactive is a ">"
+            # record: the assay ran and found no activity. Without those, the
+            # negatives are measured weak binders, which is a harder and less
+            # meaningful discrimination -- a weak binder still occupies the
+            # pocket, so an honest AUC here understates what the same control
+            # would give against true non-binders.
+            "inactive_class": ("censored '>' records (true inactives)"
+                               if int(sub.loc[sub["label"] == 0, "censored"].sum()) > 0
+                               else "measured weak binders; no censored '>' records "
+                                    "in the committed data, so re-run step 01 with "
+                                    "network access to populate a true inactive class"),
+            "n_censored_inactives": int(sub.loc[sub["label"] == 0, "censored"].sum()),
             "active_mean_kcal": round(float(scores[labels == 1].mean()), 2),
             "inactive_mean_kcal": round(float(scores[labels == 0].mean()), 2),
             "mean_replicate_sd_kcal": round(float(np.mean(sds)), 3) if sds else None,
