@@ -163,6 +163,17 @@ def _flatten_graph(mol):
     return out
 
 
+def _affinity_gap(docked, rmsds, valid):
+    """Score difference between the top-ranked pose and the lowest-RMSD pose."""
+    if not valid or not docked:
+        return None
+    best_i = int(np.argmin([r if r is not None else np.inf for r in rmsds]))
+    try:
+        return round(float(docked[0][0]) - float(docked[best_i][0]), 3)
+    except (TypeError, IndexError):
+        return None
+
+
 def symmetry_corrected_rmsd(ref_mol, probe_mol, superimpose=False):
     """Heavy-atom RMSD between two poses, symmetry-corrected.
 
@@ -300,6 +311,15 @@ def prepare_receptors_and_redock(exhaustiveness=EXHAUSTIVENESS):
             # well here, so this is a diagnostic and never the control.
             "rmsd_top1_superimposed_A": (
                 round(aligned[0], 3) if aligned and aligned[0] is not None else None),
+            # Separates a sampling failure from a ranking failure. If the
+            # native-like pose is in the output but is not ranked first, the search
+            # found it and the scoring function could not tell it apart; the score
+            # gap says by how much, and a gap inside Vina's own error is the
+            # difference between "docking cannot find this pose" and "docking
+            # cannot rank it".
+            "best_pose_rank": (int(np.argmin([r if r is not None else np.inf
+                                              for r in rmsds])) + 1) if valid else None,
+            "affinity_gap_to_best_pose_kcal": _affinity_gap(docked, rmsds, valid),
             "n_poses": len(docked),
             "n_rmsd_computed": len(valid),
             "rmsd_method": ("RDKit CalcRMS, symmetry-corrected heavy atoms, "
