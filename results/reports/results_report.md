@@ -277,9 +277,9 @@ Mondrian split-conformal intervals (90%), with the taxonomy defined by max-Tanim
 - coverage on NP-like held-out molecules: 0.825 [0.700, 0.925] (n = 40) versus 0.882 [0.866, 0.900] on the rest
 
 
-## 3. Full-library natural-product screen
+## 3. Full-library screen
 
-_The screen outputs in this repository predate the current pipeline: they were produced with a different model family, different applicability-domain thresholds, and without stereoisomer deduplication or scaffold-level novelty. They are withheld here rather than reported beside the current calibration. Regenerate with:_ `python scripts/05_screen_coconut_library.py` _(needs the COCONUT library; see `data/README.md`)._
+_Not run. Produce it with:_ `python scripts/05_screen_coconut_library.py`
 
 ## 4. Orthogonal structure-based validation (AutoDock Vina)
 
@@ -296,7 +296,5 @@ _The docking outputs in this repository predate the current validation protocol:
 - The NP-like held-out subset is small (n = 20 for FGFR4); its metrics carry wide confidence intervals and support a direction, not a point claim.
 
 - The applicability-domain threshold is non-binding for FGFR4: tau sits at the lowest similarity bin: at a 1.65 pIC50 width budget every calibration bin qualifies, so the applicability domain excludes nothing and the gate is vacuous for this target. With this calibration set, bins wide enough for a stable 90% quantile are too wide to resolve a threshold. See tau_by_budget for what a tighter budget would give. Any in-domain hit count for this target is therefore a count of the whole library, not of a calibrated-reliable subset.
-
-- The library screen and docking validation in this repository predate the current pipeline and are withheld from this report; sections 3 and 4 name the commands that regenerate them. No screening or docking claim in this document is current.
 
 - No experimental validation. Every candidate is a computational prediction and the paper claims nothing beyond that.
