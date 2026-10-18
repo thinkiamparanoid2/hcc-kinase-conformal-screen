@@ -83,11 +83,23 @@ regenerated at the defaults before publication.
 | RF / XGBoost fits | Yes, seeded |
 | Conformal quantiles, `tau` | Yes, deterministic given the split |
 | Bootstrap CIs | Yes, seeded |
-| AutoDock Vina | Yes per seed (`--seed 42 + i`); results are averaged over `N_SEEDS` |
+| Receptor preparation (Open Babel) | **No.** Polar hydrogens are added at an arbitrary rotation, so two consecutive runs differ by a few HD atoms |
+| AutoDock Vina | Yes per seed (`--seed 42 + i`) against a fixed receptor; results are averaged over `N_SEEDS` |
 
 Thread counts can change floating-point reduction order; differences should sit
 far inside the reported confidence intervals. If they do not, that is a finding
 worth reporting.
+
+The receptor row is the one real gap. Vina is deterministic given a seed and a
+receptor, but the receptor itself is not reproducible: `obabel -xr -p 7.4` places
+added hydrogens at an arbitrary rotation, and those HD atoms are exactly the
+hydrogen-bond donors the scoring function reads. So docking scores are
+reproducible within a run and only approximately across runs. The prepared
+`data/targets/*.pdbqt` are therefore not tracked, and
+`docking_validation.json` records the Open Babel version that built them. Pinning
+the receptor properly would mean preparing it once with a deterministic tool
+(PDB2PQR/PROPKA) and committing that, which is the same change limitation K7 asks
+for.
 
 ## 5. What a re-run changes
 
