@@ -1,341 +1,177 @@
 """
-Master Pipeline Orchestrator with Checkpoint/Resume Support
-============================================================
-This script runs the ENTIRE ML pipeline end-to-end with automatic
-checkpoint saving after every step. If power goes out (loadshedding)
-or the process is interrupted, simply re-run this script and it will
-RESUME from the last completed step.
+Pipeline orchestrator with checkpoint/resume
+=============================================
+Runs steps 01-07 in order, saving a checkpoint after each so an interrupted run
+resumes where it stopped.
+
+Cross-platform: steps are imported and called in-process rather than shelled out
+to a hard-coded interpreter path, and external binaries are resolved through
+`common.resolve_binary` (PATH, or VINA_BIN / OBABEL_BIN). Nothing here assumes a
+particular operating system or conda prefix.
 
 Usage:
-    python scripts/run_pipeline.py              # Run full pipeline (resume if interrupted)
-    python scripts/run_pipeline.py --reset       # Clear all checkpoints and start fresh
-    python scripts/run_pipeline.py --from-step 3 # Force start from step 3
-
-Environment:
-    Activate: conda activate hcc-screen
-    Repo:     hcc-kinase-conformal-screen
+    python scripts/run_pipeline.py                # run (resume if interrupted)
+    python scripts/run_pipeline.py --reset        # clear checkpoints, start fresh
+    python scripts/run_pipeline.py --from-step 3  # force start at step 3
+    python scripts/run_pipeline.py --only 3 4     # run only these steps
+    python scripts/run_pipeline.py --list         # show steps and prerequisites
 """
 
+import argparse
+import datetime
+import importlib.util
+import json
 import os
 import sys
-import json
 import time
-import datetime
 import traceback
 
-_BIN_DIR = os.path.join(sys.prefix, "Library", "bin")
-if os.path.isdir(_BIN_DIR):
-    os.environ["PATH"] = _BIN_DIR + os.pathsep + os.environ.get("PATH", "")
-    if hasattr(os, "add_dll_directory"):
-        os.add_dll_directory(_BIN_DIR)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)
+sys.path.insert(0, SCRIPT_DIR)
+import common as C
 
-# Fix Windows terminal encoding
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+CHECKPOINT_FILE = os.path.join(REPO_ROOT, "pipeline_checkpoint.json")
 
-# ============================================================================
-# Configuration — ALL DECISIONS PRE-MADE (no ambiguity for next agent)
-# ============================================================================
-
-CONFIG = {
-    # Targets to process (order: smallest first for fast debugging)
-    "targets": ["FGFR4", "EGFR", "VEGFR2"],
-
-    # Target ChEMBL IDs
-    "target_ids": {
-        "EGFR": "CHEMBL203",
-        "FGFR4": "CHEMBL1974",
-        "VEGFR2": "CHEMBL279",
-    },
-
-    # Feature engineering settings
-    "morgan_radius": 2,
-    "morgan_bits": 2048,
-
-    # ML training settings
-    "pIC50_threshold": 6.0,      # Active/inactive cutoff (6.0 = 1 uM IC50)
-    "test_fraction": 0.2,        # 80/20 scaffold split
-    "random_state": 42,
-
-    # Applicability domain: calibrated empirically in scripts/04_conformal_ad_models.py
-    # (Mondrian conformal by max-Tanimoto bin; see constants at top of that file).
-
-    # Paths
-    "data_dir": "data",
-    "features_dir": os.path.join("data", "features"),
-    "models_dir": "models",
-    "results_dir": "results",
-    "checkpoint_file": "pipeline_checkpoint.json",
-
-    # Python executable
-    "python_exe": r"F:\miniconda3\envs\hcc-screen\python.exe",
-}
+STEPS = [
+    (1, "01_fetch_chembl_data", "Download and curate ChEMBL IC50 data",
+     ["network access to ChEMBL"]),
+    (2, "02_feature_engineering", "Physicochemical descriptors + ECFP4", []),
+    (3, "03_scaffold_benchmark", "Scaffold benchmark and model selection", []),
+    (4, "04_conformal_ad_models", "Final model, conformal calibration, AD", []),
+    (5, "05_screen_coconut_library", "Full natural-product library screen",
+     ["data/ligands_phytochemical/phytochemical_screening_set.csv"]),
+    (6, "06_docking_validation", "AutoDock Vina structure-based validation",
+     ["vina on PATH or VINA_BIN", "obabel on PATH or OBABEL_BIN"]),
+    (7, "07_generate_report", "Report and figures", []),
+]
 
 
-# ============================================================================
-# Checkpoint Manager
-# ============================================================================
+def load_module(name):
+    path = os.path.join(SCRIPT_DIR, f"{name}.py")
+    spec = importlib.util.spec_from_file_location(f"step_{name}", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
-class CheckpointManager:
-    """Tracks completed pipeline steps and allows resume after interruption."""
 
-    def __init__(self, checkpoint_path):
-        self.path = checkpoint_path
-        self.state = self._load()
+class Checkpoint:
+    def __init__(self, path=CHECKPOINT_FILE):
+        self.path = path
+        self.state = {"completed": [], "history": []}
+        if os.path.exists(path):
+            try:
+                with open(path) as f:
+                    self.state = json.load(f)
+            except Exception:
+                pass
 
-    def _load(self):
-        if os.path.exists(self.path):
-            with open(self.path, "r") as f:
-                return json.load(f)
-        return {"completed_steps": [], "step_results": {}, "started_at": None}
+    def done(self, step):
+        return step in self.state.get("completed", [])
+
+    def mark(self, step, name, secs, result):
+        if step not in self.state["completed"]:
+            self.state["completed"].append(step)
+        self.state["history"].append({
+            "step": step, "name": name, "seconds": round(secs, 1),
+            "finished_at": datetime.datetime.now().isoformat(timespec="seconds"),
+            "result": result if isinstance(result, (dict, str, type(None))) else str(result),
+        })
+        self.save()
+
+    def reset(self):
+        self.state = {"completed": [], "history": []}
+        self.save()
 
     def save(self):
         with open(self.path, "w") as f:
             json.dump(self.state, f, indent=2, default=str)
 
-    def is_done(self, step_id):
-        return step_id in self.state["completed_steps"]
 
-    def mark_done(self, step_id, result=None):
-        if step_id not in self.state["completed_steps"]:
-            self.state["completed_steps"].append(step_id)
-        self.state["step_results"][step_id] = {
-            "completed_at": datetime.datetime.now().isoformat(),
-            "result": result
-        }
-        self.save()
-
-    def reset(self):
-        self.state = {"completed_steps": [], "step_results": {}, "started_at": None}
-        self.save()
-
-    def set_started(self):
-        if not self.state["started_at"]:
-            self.state["started_at"] = datetime.datetime.now().isoformat()
-            self.save()
+def check_prereqs(step):
+    """Return a list of unmet prerequisites, so a step fails early and clearly."""
+    unmet = []
+    for _, _, _, prereqs in [s for s in STEPS if s[0] == step]:
+        for p in prereqs:
+            if p.startswith("data/") or p.startswith("results/"):
+                if not os.path.exists(os.path.join(REPO_ROOT, p)):
+                    unmet.append(f"missing file: {p}")
+            elif " on PATH" in p:
+                binary = p.split()[0]
+                env_var = p.split("or ")[-1] if "or " in p else None
+                try:
+                    C.resolve_binary(binary, env_var=env_var, required=True)
+                except Exception:
+                    unmet.append(f"missing executable: {p}")
+    return unmet
 
 
-# ============================================================================
-# Directory Setup
-# ============================================================================
+def run(from_step=1, only=None, reset=False):
+    os.chdir(REPO_ROOT)
+    cp = Checkpoint()
+    if reset:
+        cp.reset()
+        print("[+] Checkpoints cleared.")
 
-def setup_directories():
-    """Create all output directories upfront."""
-    dirs = [
-        CONFIG["features_dir"],
-        CONFIG["models_dir"],
-        os.path.join(CONFIG["results_dir"], "predictions"),
-        os.path.join(CONFIG["results_dir"], "reports"),
-        os.path.join(CONFIG["results_dir"], "figures"),
-        os.path.join(CONFIG["results_dir"], "docking_poses"),
-    ]
-    for d in dirs:
-        os.makedirs(d, exist_ok=True)
-    print("[OK] All output directories created.")
+    selected = set(only) if only else {s[0] for s in STEPS if s[0] >= from_step}
+    failures = []
 
-
-# ============================================================================
-# Pipeline Steps
-# ============================================================================
-
-def step_1_verify_training_data():
-    """Verify that ChEMBL training CSVs exist and have valid data."""
-    import pandas as pd
-    results = {}
-    for target in CONFIG["targets"]:
-        csv_path = os.path.join(CONFIG["data_dir"], "ligands_chembl",
-                                f"{target}_IC50_training_data.csv")
-        if not os.path.exists(csv_path):
-            raise FileNotFoundError(
-                f"Training data missing: {csv_path}\n"
-                f"Run: python scripts/01_fetch_chembl_data.py"
-            )
-        df = pd.read_csv(csv_path)
-        n = len(df)
-        has_smiles = "canonical_smiles" in df.columns
-        has_pchembl = "pchembl_value" in df.columns
-        if not has_smiles or not has_pchembl:
-            raise ValueError(f"{csv_path} missing required columns")
-        results[target] = n
-        print(f"    {target}: {n} records [OK]")
-
-    # Verify phytochemical screening set
-    screen_path = os.path.join(CONFIG["data_dir"], "ligands_phytochemical",
-                               "phytochemical_screening_set.csv")
-    if not os.path.exists(screen_path):
-        raise FileNotFoundError(f"Screening set missing: {screen_path}")
-    df_screen = pd.read_csv(screen_path, nrows=10)
-    print(f"    Phytochemical screening set: present [OK]")
-
-    # Verify PDB structures
-    for pdb in ["egfr_1m17.pdb", "fgfr4_5jkg.pdb", "vegfr2_4asd.pdb"]:
-        pdb_path = os.path.join(CONFIG["data_dir"], "targets", pdb)
-        if not os.path.exists(pdb_path):
-            print(f"    [WARN] PDB file missing: {pdb} (docking step will be skipped)")
-
-    return results
-
-
-def step_2_feature_engineering_training():
-    """Generate feature tables for all training datasets."""
-    sys.path.insert(0, "scripts")
-    if "scripts.02_feature_engineering" in sys.modules:
-        del sys.modules["scripts.02_feature_engineering"]
-
-    import importlib.util
-    spec = importlib.util.spec_from_file_location(
-        "feat_eng", "scripts/02_feature_engineering.py")
-    feat_eng = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(feat_eng)
-
-    results = {}
-    for target in CONFIG["targets"]:
-        bio_csv = os.path.join(CONFIG["data_dir"], "ligands_chembl",
-                               f"{target}_IC50_training_data.csv")
-        dock_csv = os.path.join(CONFIG["results_dir"], "docking_poses",
-                                f"{target}_binding_affinities.csv")
-        out_csv = os.path.join(CONFIG["features_dir"],
-                               f"{target}_training_features.csv")
-
-        if os.path.exists(out_csv):
-            import pandas as pd
-            existing = len(pd.read_csv(out_csv))
-            print(f"    {target}: Feature file already exists ({existing} rows). Skipping.")
-            results[target] = existing
+    for step, module_name, title, _ in STEPS:
+        if step not in selected:
+            continue
+        if cp.done(step) and not only:
+            print(f"[=] Step {step} ({title}) already complete; skipping.")
             continue
 
-        df = feat_eng.build_feature_table(
-            bio_csv, dock_csv, out_csv,
-            is_training=True,
-            morgan_radius=CONFIG["morgan_radius"],
-            morgan_bits=CONFIG["morgan_bits"]
-        )
-        results[target] = len(df) if df is not None else 0
+        unmet = check_prereqs(step)
+        if unmet:
+            print(f"[!] Step {step} ({title}) cannot run:")
+            for u in unmet:
+                print(f"      - {u}")
+            print("      Skipping. Downstream steps that need it will also be skipped.")
+            failures.append((step, title, "; ".join(unmet)))
+            continue
 
-    return results
-
-
-def _load_module(name, path):
-    """Load a numerically-prefixed script (e.g. 03_scaffold_benchmark.py) as a module."""
-    import importlib.util
-    sys.path.insert(0, "scripts")          # so scripts can `import common`
-    spec = importlib.util.spec_from_file_location(name, path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
-def step_3_benchmark():
-    """Repeated scaffold-split benchmark: baselines + RF + XGBoost + scramble control."""
-    return _load_module("bench", "scripts/03_scaffold_benchmark.py").main()
-
-
-def step_4_final_models_ad():
-    """Final XGBoost models, Mondrian conformal intervals, empirical AD, NP-likeness analysis."""
-    return _load_module("final", "scripts/04_conformal_ad_models.py").main()
-
-
-def step_5_screen_library():
-    """Screen the FULL natural-product library (all ~738k compounds)."""
-    import subprocess
-    subprocess.check_call([sys.executable, "-u", "scripts/05_screen_coconut_library.py"])
-    with open(os.path.join(CONFIG["results_dir"], "metrics", "screen_summary.json")) as f:
-        s = json.load(f)
-    return {"status": "full library screened", "n": s.get("library_valid", 0)}
-
-
-def step_6_docking_validation():
-    """Orthogonal 3D structure-based validation with AutoDock Vina 1.2.5."""
-    return _load_module("dock_val", "scripts/06_docking_validation.py").main()
-
-
-def step_7_report():
-    """Generate the results report and figures from metrics/prediction files."""
-    return _load_module("report", "scripts/07_generate_report.py").main()
-
-
-# ============================================================================
-# Pipeline Runner
-# ============================================================================
-
-PIPELINE_STEPS = [
-    ("step_1_verify_data",        "Verify all input datasets exist and are valid",
-     step_1_verify_training_data),
-    ("step_2_features_training",  "Feature engineering for training data (21 descriptors + 2048-bit ECFP4)",
-     step_2_feature_engineering_training),
-    ("step_3_benchmark",          "Repeated scaffold-split benchmark (baselines, RF, XGBoost, scramble control)",
-     step_3_benchmark),
-    ("step_4_final_models_ad",    "Final models + conformal intervals + calibrated applicability domain",
-     step_4_final_models_ad),
-    ("step_5_screen_library",     "Full-library natural-product screen (~738k compounds)",
-     step_5_screen_library),
-    ("step_6_docking_validation", "Orthogonal structure-based docking validation (AutoDock Vina 1.2.5)",
-     step_6_docking_validation),
-    ("step_7_report",             "Generate results report and publication figures",
-     step_7_report),
-]
-
-
-def run_pipeline(from_step=None, reset=False):
-    """Run the full pipeline with checkpoint/resume support."""
-    ckpt = CheckpointManager(CONFIG["checkpoint_file"])
-
-    if reset:
-        ckpt.reset()
-        print("[OK] All checkpoints cleared. Starting fresh.\n")
-
-    ckpt.set_started()
-    setup_directories()
+        print(f"\n{'=' * 70}\n[>] Step {step}: {title}\n{'=' * 70}", flush=True)
+        t0 = time.time()
+        try:
+            module = load_module(module_name)
+            result = module.main()
+            cp.mark(step, title, time.time() - t0, result)
+            print(f"[OK] Step {step} finished in {(time.time() - t0) / 60:.1f} min")
+        except Exception as exc:
+            traceback.print_exc()
+            failures.append((step, title, str(exc)[:200]))
+            print(f"[!] Step {step} failed: {exc}")
+            break
 
     print("\n" + "=" * 70)
-    print("  HCC PHYTOMEDICINE ML PIPELINE — MASTER ORCHESTRATOR")
-    print("  Checkpoint/Resume enabled. Safe to interrupt and restart.")
-    print("=" * 70)
+    print("Completed steps:", sorted(cp.state.get("completed", [])))
+    if failures:
+        print("Not completed:")
+        for step, title, reason in failures:
+            print(f"  step {step} ({title}): {reason}")
+    return failures
 
-    total = len(PIPELINE_STEPS)
-    for i, (step_id, description, func) in enumerate(PIPELINE_STEPS, 1):
-        # Skip steps if from_step is specified
-        if from_step and i < from_step:
-            continue
 
-        # Skip already completed steps
-        if ckpt.is_done(step_id) and not from_step:
-            print(f"\n[SKIP] Step {i}/{total}: {description}")
-            print(f"       (Already completed. Delete pipeline_checkpoint.json to rerun)")
-            continue
+def main():
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--reset", action="store_true", help="clear checkpoints")
+    parser.add_argument("--from-step", type=int, default=1)
+    parser.add_argument("--only", type=int, nargs="+")
+    parser.add_argument("--list", action="store_true")
+    args = parser.parse_args()
 
-        print(f"\n{'='*70}")
-        print(f"  STEP {i}/{total}: {description}")
-        print(f"  Step ID: {step_id}")
-        print(f"  Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"{'='*70}\n")
+    if args.list:
+        for step, _, title, prereqs in STEPS:
+            extra = f"  (needs: {', '.join(prereqs)})" if prereqs else ""
+            print(f"  {step}. {title}{extra}")
+        return 0
 
-        try:
-            result = func()
-            ckpt.mark_done(step_id, result)
-            print(f"\n[OK] Step {i}/{total} complete: {step_id}")
-        except Exception as e:
-            print(f"\n[FAILED] Step {i}/{total} failed: {step_id}")
-            print(f"         Error: {str(e)[:500]}")
-            traceback.print_exc()
-            print(f"\n[!] Pipeline paused. Fix the issue and re-run this script.")
-            print(f"    It will automatically resume from step {i}.")
-            sys.exit(1)
-
-    print(f"\n{'='*70}")
-    print(f"  PIPELINE COMPLETE!")
-    print(f"  All {total} steps finished successfully.")
-    print(f"  Results saved to: {CONFIG['results_dir']}/")
-    print(f"{'='*70}")
+    failures = run(from_step=args.from_step, only=args.only, reset=args.reset)
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-
-    if "--reset" in args:
-        run_pipeline(reset=True)
-    elif "--from-step" in args:
-        idx = args.index("--from-step")
-        step_num = int(args[idx + 1])
-        run_pipeline(from_step=step_num)
-    else:
-        run_pipeline()
+    sys.exit(main())

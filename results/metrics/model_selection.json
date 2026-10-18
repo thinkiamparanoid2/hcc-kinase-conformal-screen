@@ -1,0 +1,32 @@
+{
+  "selected_model": "RF-ecfp",
+  "mean_R2_by_model": {
+    "RF-desc": 0.2807314781255383,
+    "RF-ecfp": 0.5497301566130014,
+    "RF-all": 0.5303369104385315,
+    "XGB-all": 0.533588569026109
+  },
+  "mean_R2_by_target": {
+    "FGFR4": {
+      "RF-desc": 0.3691334165989083,
+      "RF-ecfp": 0.5662637893626024,
+      "RF-all": 0.5472539600677057,
+      "XGB-all": 0.556066686210703
+    },
+    "EGFR": {
+      "RF-desc": 0.24672856053548417,
+      "RF-ecfp": 0.5737254148670934,
+      "RF-all": 0.5473188688507388,
+      "XGB-all": 0.5485359517282561
+    },
+    "VEGFR2": {
+      "RF-desc": 0.22633245724222234,
+      "RF-ecfp": 0.5092012656093085,
+      "RF-all": 0.49643790239715013,
+      "XGB-all": 0.496163069139368
+    }
+  },
+  "criterion": "highest mean R2 across targets on repeated random scaffold splits",
+  "note": "Step 04 calibrates and step 05 screens with this family, so the model used downstream is the one this benchmark actually favours.",
+  "hyperparameters": "Hyperparameters are fixed a priori at common library defaults and were not tuned on any split reported here; no model selection was performed against test-set performance. Tuning, if added, must run as an inner cross-validation loop on the training scaffolds only."
+}

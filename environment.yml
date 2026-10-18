@@ -1,0 +1,26 @@
+# Conda environment for the HCC kinase conformal screening pipeline.
+#   conda env create -f environment.yml
+#   conda activate hcc-screen
+#
+# AutoDock Vina and Open Babel come from conda-forge so that step 06 runs on
+# Linux, macOS and Windows without hard-coded binary paths. The scripts resolve
+# them via PATH, or via the VINA_BIN / OBABEL_BIN environment variables.
+name: hcc-screen
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy=2.2.*
+  - pandas=2.3.*
+  - scipy=1.15.*
+  - scikit-learn=1.7.*
+  - xgboost=3.2.*
+  - rdkit=2025.03.*
+  - matplotlib=3.10.*
+  - tqdm>=4.66
+  - vina=1.2.5
+  - openbabel=3.1.1
+  - pytest>=8.0
+  - pip
+  - pip:
+      - chembl-webresource-client>=0.10.9

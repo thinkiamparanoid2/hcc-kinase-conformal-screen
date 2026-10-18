@@ -1,20 +1,110 @@
 [
   {
     "target": "EGFR",
-    "XGB_minus_kNN_R2_mean": 0.0246763136340586,
-    "XGB_wins": 8,
-    "n_seeds": 10
+    "comparison": "XGB-all vs kNN-Tanimoto",
+    "mean_dR2": 0.017442965806322163,
+    "wins": 6,
+    "n_seeds": 10,
+    "wilcoxon_p": 0.193359375,
+    "interpretation": "paired over scaffold splits of one dataset; measures split noise, not generalisation to new chemistry"
+  },
+  {
+    "target": "EGFR",
+    "comparison": "RF-ecfp vs kNN-Tanimoto",
+    "mean_dR2": 0.042632428945159465,
+    "wins": 9,
+    "n_seeds": 10,
+    "wilcoxon_p": 0.009765625,
+    "interpretation": "paired over scaffold splits of one dataset; measures split noise, not generalisation to new chemistry"
+  },
+  {
+    "target": "EGFR",
+    "comparison": "RF-all vs RF-ecfp",
+    "mean_dR2": -0.026406546016354737,
+    "wins": 0,
+    "n_seeds": 10,
+    "wilcoxon_p": 0.001953125,
+    "interpretation": "paired over scaffold splits of one dataset; measures split noise, not generalisation to new chemistry"
+  },
+  {
+    "target": "EGFR",
+    "comparison": "XGB-all vs RF-ecfp",
+    "mean_dR2": -0.025189463138837298,
+    "wins": 1,
+    "n_seeds": 10,
+    "wilcoxon_p": 0.00390625,
+    "interpretation": "paired over scaffold splits of one dataset; measures split noise, not generalisation to new chemistry"
   },
   {
     "target": "FGFR4",
-    "XGB_minus_kNN_R2_mean": 0.036280150865580604,
-    "XGB_wins": 9,
-    "n_seeds": 10
+    "comparison": "XGB-all vs kNN-Tanimoto",
+    "mean_dR2": 0.05719211892302549,
+    "wins": 9,
+    "n_seeds": 10,
+    "wilcoxon_p": 0.00390625,
+    "interpretation": "paired over scaffold splits of one dataset; measures split noise, not generalisation to new chemistry"
+  },
+  {
+    "target": "FGFR4",
+    "comparison": "RF-ecfp vs kNN-Tanimoto",
+    "mean_dR2": 0.06738922207492501,
+    "wins": 10,
+    "n_seeds": 10,
+    "wilcoxon_p": 0.001953125,
+    "interpretation": "paired over scaffold splits of one dataset; measures split noise, not generalisation to new chemistry"
+  },
+  {
+    "target": "FGFR4",
+    "comparison": "RF-all vs RF-ecfp",
+    "mean_dR2": -0.019009829294896797,
+    "wins": 1,
+    "n_seeds": 10,
+    "wilcoxon_p": 0.00390625,
+    "interpretation": "paired over scaffold splits of one dataset; measures split noise, not generalisation to new chemistry"
+  },
+  {
+    "target": "FGFR4",
+    "comparison": "XGB-all vs RF-ecfp",
+    "mean_dR2": -0.010197103151899511,
+    "wins": 2,
+    "n_seeds": 10,
+    "wilcoxon_p": 0.10546875,
+    "interpretation": "paired over scaffold splits of one dataset; measures split noise, not generalisation to new chemistry"
   },
   {
     "target": "VEGFR2",
-    "XGB_minus_kNN_R2_mean": 0.034346365348319655,
-    "XGB_wins": 9,
-    "n_seeds": 10
+    "comparison": "XGB-all vs kNN-Tanimoto",
+    "mean_dR2": 0.049551801768049464,
+    "wins": 9,
+    "n_seeds": 10,
+    "wilcoxon_p": 0.005859375,
+    "interpretation": "paired over scaffold splits of one dataset; measures split noise, not generalisation to new chemistry"
+  },
+  {
+    "target": "VEGFR2",
+    "comparison": "RF-ecfp vs kNN-Tanimoto",
+    "mean_dR2": 0.06258999823798989,
+    "wins": 10,
+    "n_seeds": 10,
+    "wilcoxon_p": 0.001953125,
+    "interpretation": "paired over scaffold splits of one dataset; measures split noise, not generalisation to new chemistry"
+  },
+  {
+    "target": "VEGFR2",
+    "comparison": "RF-all vs RF-ecfp",
+    "mean_dR2": -0.012763363212158253,
+    "wins": 1,
+    "n_seeds": 10,
+    "wilcoxon_p": 0.005859375,
+    "interpretation": "paired over scaffold splits of one dataset; measures split noise, not generalisation to new chemistry"
+  },
+  {
+    "target": "VEGFR2",
+    "comparison": "XGB-all vs RF-ecfp",
+    "mean_dR2": -0.013038196469940422,
+    "wins": 2,
+    "n_seeds": 10,
+    "wilcoxon_p": 0.009765625,
+    "interpretation": "paired over scaffold splits of one dataset; measures split noise, not generalisation to new chemistry"
   }
 ]

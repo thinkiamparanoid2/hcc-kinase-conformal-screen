@@ -1,232 +1,119 @@
 """
-Phase 5: Feature Engineering & Descriptor Extraction (Publication-Grade)
-------------------------------------------------------------------------
-Computes a comprehensive feature set for ML/QML modeling:
-  1. Physicochemical descriptors (Lipinski properties, TPSA, rotatable bonds, etc.)
-  2. Structural fingerprints (ECFP4 / Morgan fingerprints, radius=2, 2048 bits)
-  3. Extended RDKit 2D descriptors (200+ molecular properties)
-  4. Optional: Docking scores from AutoDock Vina binding affinities
+Step 02 - Feature engineering
+-----------------------------
+Builds the ML-ready table for each target: 21 physicochemical/topological
+descriptors + a 2048-bit ECFP4 (Morgan radius 2) fingerprint, carried alongside
+the curation metadata from step 01 (pIC50, relation, censored, replicate stats).
 
-Merges all features into unified ML-ready CSV tables for training (ChEMBL knowns)
-and prediction (phytochemical screening library).
+Descriptor and fingerprint definitions live in `common.py` so that this script and
+the streaming screen in step 05 cannot drift apart.
 
-References:
-  - Rogers & Hahn (2010). Extended-Connectivity Fingerprints. J. Chem. Inf. Model.
-  - RDKit Descriptor Module: https://www.rdkit.org/docs/GettingStartedInPython.html
+Two paths were deleted from the earlier version, deliberately:
+
+- The optional `docking_csv` argument, which appended a `DockingScore` feature.
+  Docking scores are the orthogonal validation in step 06; feeding them into the
+  QSAR features would make that validation circular, and the column silently
+  changed the feature count that step 05 asserts on.
+- The full phytochemical feature table (~3 GB on disk). Step 05 streams the
+  library and featurises in-process, so that file was written and never read.
+
+Output: data/features/<TARGET>_training_features.csv
+
+References
+  Rogers & Hahn (2010) Extended-Connectivity Fingerprints. J. Chem. Inf. Model.
+  Bemis & Murcko (1996) The properties of known drugs. J. Med. Chem.
 """
 
 import os
-import pandas as pd
+import sys
+
 import numpy as np
+import pandas as pd
 from rdkit import Chem
-from rdkit.Chem import Descriptors, AllChem, rdMolDescriptors
-from rdkit.ML.Descriptors import MoleculeDescriptors
 from tqdm import tqdm
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+import common as C
 
-# ============================================================================
-# Morgan Fingerprint (ECFP4) Generation
-# ============================================================================
-
-def compute_morgan_fingerprint(mol, radius=2, n_bits=2048):
-    """
-    Generates an ECFP4 (Extended-Connectivity Fingerprint) bit vector.
-    Radius=2 corresponds to ECFP4 (diameter=4 bonds).
-    Returns a list of integer bits (0 or 1) of length n_bits.
-    """
-    fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=n_bits)
-    return list(fp)
+# Metadata carried through from step 01 so downstream code can filter on label
+# quality without re-reading the ligand CSV.
+CARRY_COLS = ["molecule_chembl_id", "inchikey", "pIC50", "relation", "censored",
+              "label_kind", "n_replicates", "replicate_sd", "first_year"]
 
 
-# ============================================================================
-# Physicochemical & Extended 2D Descriptors
-# ============================================================================
-
-# Curated set of robust, interpretable physicochemical descriptors
-PHYSCHEM_DESCRIPTOR_NAMES = [
-    "MolWt", "MolLogP", "TPSA",
-    "NumHDonors", "NumHAcceptors",
-    "NumRotatableBonds", "NumAromaticRings",
-    "NumHeteroatoms", "NumAliphaticRings",
-    "FractionCSP3", "HeavyAtomCount",
-    "RingCount", "BertzCT",
-    "NumValenceElectrons",
-    "NumRadicalElectrons",
-    "LabuteASA",          # Labute Accessible Surface Area
-    "BalabanJ",           # Balaban's J index (topological)
-    "Chi0n", "Chi1n",     # Kier-Hall connectivity indices
-    "HallKierAlpha",      # Hall-Kier alpha value
-]
-
-
-def compute_physchem_descriptors(mol):
-    """
-    Computes a curated set of 20 physicochemical/topological descriptors
-    plus Lipinski Rule of 5 violation count.
-    """
-    calc = MoleculeDescriptors.MolecularDescriptorCalculator(PHYSCHEM_DESCRIPTOR_NAMES)
-    desc_values = calc.CalcDescriptors(mol)
-    features = dict(zip(PHYSCHEM_DESCRIPTOR_NAMES, desc_values))
-
-    # Lipinski Rule of 5 violation count
-    features["LipinskiViolations"] = sum([
-        features.get("MolWt", 0) > 500,
-        features.get("MolLogP", 0) > 5,
-        features.get("NumHDonors", 0) > 5,
-        features.get("NumHAcceptors", 0) > 10
-    ])
-
+def featurise_smiles(smiles):
+    """One molecule -> {descriptor: value, FP_i: bit} or None if unparsable."""
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return None
+    try:
+        features = C.physchem_descriptors(mol)
+    except Exception:
+        return None
+    bits = C._MORGAN.GetFingerprintAsNumPy(mol)
+    for i, bit in enumerate(bits):
+        features[f"FP_{i}"] = int(bit)
     return features
 
 
-# ============================================================================
-# Unified Feature Extraction Pipeline
-# ============================================================================
-
-def extract_all_features(smiles, docking_score=None, morgan_radius=2, morgan_bits=2048):
-    """
-    Master feature extraction function for a single molecule.
-    Returns a dict combining:
-      - 20 physicochemical descriptors + Lipinski violations
-      - 2048-bit Morgan/ECFP4 fingerprint (columns: FP_0 ... FP_2047)
-      - Optional docking score
-    Returns None if the SMILES cannot be parsed.
-    """
-    try:
-        mol = Chem.MolFromSmiles(smiles)
-        if mol is None:
-            return None
-
-        # 1. Physicochemical descriptors
-        features = compute_physchem_descriptors(mol)
-
-        # 2. Morgan fingerprint (ECFP4)
-        fp_bits = compute_morgan_fingerprint(mol, radius=morgan_radius, n_bits=morgan_bits)
-        for i, bit in enumerate(fp_bits):
-            features[f"FP_{i}"] = bit
-
-        # 3. Optional docking score
-        if docking_score is not None:
-            features["DockingScore"] = docking_score
-
-        return features
-
-    except Exception:
+def build_feature_table(ligand_csv, output_path):
+    if not os.path.exists(ligand_csv):
+        print(f"[!] Input not found: {ligand_csv}")
         return None
 
+    df_mols = pd.read_csv(ligand_csv)
+    smiles_col = "canonical_smiles" if "canonical_smiles" in df_mols.columns else "smiles"
 
-def build_feature_table(bioactivity_csv, docking_csv, output_path,
-                        is_training=True, label_col="pchembl_value",
-                        morgan_radius=2, morgan_bits=2048):
-    """
-    Builds a comprehensive ML feature table by combining:
-      - Physicochemical descriptors (20 features)
-      - ECFP4 Morgan fingerprints (2048 bits)
-      - Docking binding affinities (if available)
-      - pIC50 labels (for training data only)
+    print(f"\n[+] Featurising {len(df_mols)} compounds from {ligand_csv}")
+    print(f"    {len(C.DESC_COLS)} descriptors + {C.N_FP_BITS}-bit ECFP4")
 
-    Parameters
-    ----------
-    bioactivity_csv : str
-        Path to the ChEMBL training CSV or phytochemical screening CSV.
-    docking_csv : str
-        Path to docking results CSV (ligand_id, docking_score_kcal_mol).
-    output_path : str
-        Where to save the generated feature table.
-    is_training : bool
-        If True, includes pIC50 label column from bioactivity_csv.
-    label_col : str
-        Column name for the bioactivity label (default: pchembl_value).
-    morgan_radius : int
-        Morgan fingerprint radius (2 = ECFP4).
-    morgan_bits : int
-        Number of Morgan fingerprint bits (default: 2048).
-    """
-    if not os.path.exists(bioactivity_csv):
-        print(f"[!] Input bioactivity file not found: {bioactivity_csv}")
-        return
-
-    df_mols = pd.read_csv(bioactivity_csv)
-
-    # Load docking scores if available
-    docking_scores = {}
-    if docking_csv and os.path.exists(docking_csv):
-        df_dock = pd.read_csv(docking_csv)
-        for _, row in df_dock.iterrows():
-            docking_scores[str(row["ligand_id"])] = row["docking_score_kcal_mol"]
-    else:
-        print(f"[!] Docking scores file not found ({docking_csv}). "
-              "Building features without docking affinity.")
-
-    records = []
-    skipped = 0
-    print(f"\n[+] Extracting {len(PHYSCHEM_DESCRIPTOR_NAMES)} physicochemical descriptors "
-          f"+ {morgan_bits}-bit ECFP4 fingerprints for {len(df_mols)} compounds...")
-
-    for _, row in tqdm(df_mols.iterrows(), total=len(df_mols), desc="Feature Extraction"):
-        smi = row.get("canonical_smiles") or row.get("smiles")
-        lig_id = str(
-            row.get("molecule_chembl_id", row.get("ligand_id", ""))
-        ).replace("/", "_").replace("\\", "_")
-
-        dock_val = docking_scores.get(lig_id, None)
-        feat = extract_all_features(
-            smi, docking_score=dock_val,
-            morgan_radius=morgan_radius, morgan_bits=morgan_bits
-        )
-
-        if feat is not None:
-            feat["ligand_id"] = lig_id
-            feat["canonical_smiles"] = smi
-            if is_training and label_col in row.index:
-                feat["pIC50"] = row[label_col]
-            records.append(feat)
-        else:
+    records, skipped = [], 0
+    for _, row in tqdm(df_mols.iterrows(), total=len(df_mols), desc="features"):
+        smi = row.get(smiles_col)
+        feat = featurise_smiles(smi) if isinstance(smi, str) else None
+        if feat is None:
             skipped += 1
+            continue
+        feat["canonical_smiles"] = smi
+        feat["ligand_id"] = str(row.get("molecule_chembl_id", row.get("ligand_id", ""))
+                                ).replace("/", "_").replace("\\", "_")
+        for col in CARRY_COLS:
+            if col in df_mols.columns:
+                feat[col] = row[col]
+        if "censored" not in df_mols.columns:
+            # Legacy CSV from before censoring was tracked: every row is an exact
+            # measurement by construction, because censored relations were not
+            # requested. Recorded explicitly so no downstream step has to guess.
+            feat["censored"] = False
+            feat["label_kind"] = "exact"
+        records.append(feat)
 
-    df_out = pd.DataFrame(records)
+    out = pd.DataFrame(records)
+    # Stable, explicit column order: metadata, then descriptors, then fingerprint.
+    meta = [c for c in ["ligand_id", "canonical_smiles", "molecule_chembl_id",
+                        "inchikey", "pIC50", "relation", "censored", "label_kind",
+                        "n_replicates", "replicate_sd", "first_year"]
+            if c in out.columns]
+    out = out[meta + C.DESC_COLS + C.FP_COLS]
+
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
-    df_out.to_csv(output_path, index=False)
+    out.to_csv(output_path, index=False)
+    n_exact = int((~out["censored"].astype(bool)).sum()) if "censored" in out else len(out)
+    print(f"[OK] {len(out)} molecules x {len(C.FEATURE_COLS)} features -> {output_path}")
+    print(f"     usable as regression targets (uncensored): {n_exact}")
+    if skipped:
+        print(f"     skipped {skipped} unparsable structures")
+    return out
 
-    n_physchem = len(PHYSCHEM_DESCRIPTOR_NAMES) + 1  # +1 for LipinskiViolations
-    n_fp = morgan_bits
-    n_dock = 1 if docking_scores else 0
-    n_total = n_physchem + n_fp + n_dock
 
-    print(f"[OK] Feature table generated: {len(df_out)} molecules x {n_total} features")
-    print(f"     Physicochemical: {n_physchem} | ECFP4 bits: {n_fp} | Docking: {n_dock}")
-    if skipped > 0:
-        print(f"     Skipped {skipped} molecules due to invalid SMILES")
-    print(f"     Saved to: {output_path}")
-    return df_out
+def main(targets=None):
+    print("=== Step 02: Molecular feature engineering ===")
+    for t in (targets or C.TARGETS):
+        build_feature_table(
+            os.path.join(C.LIGAND_DIR, f"{t}_IC50_training_data.csv"),
+            os.path.join(C.FEATURES_DIR, f"{t}_training_features.csv"))
+    return {"status": "feature engineering complete"}
 
 
 if __name__ == "__main__":
-    print("=== Publication-Grade Molecular Feature Engineering Engine ===")
-    print("Features: 21 physicochemical descriptors + 2048-bit ECFP4 Morgan fingerprints")
-    print()
-
-    # Auto-process all available training datasets
-    targets = ["EGFR", "FGFR4", "VEGFR2"]
-    for t in targets:
-        bio_csv = os.path.join("data", "ligands_chembl", f"{t}_IC50_training_data.csv")
-        dock_csv = os.path.join("results", "docking_poses", f"{t}_pilot",
-                                f"{t}_binding_affinities.csv")
-        out_csv = os.path.join("data", "features", f"{t}_training_features.csv")
-        if os.path.exists(bio_csv):
-            build_feature_table(bio_csv, dock_csv, out_csv, is_training=True)
-
-    # Process phytochemical screening library
-    screen_csv = os.path.join("data", "ligands_phytochemical",
-                              "phytochemical_screening_set.csv")
-    if os.path.exists(screen_csv):
-        build_feature_table(
-            screen_csv,
-            docking_csv=None,
-            output_path=os.path.join("data", "features",
-                                     "phytochemical_screening_features.csv"),
-            is_training=False,
-            label_col="pchembl_value"
-        )
-
-    print("\n[OK] Feature engineering complete for all available datasets.")
+    main(sys.argv[1:] or None)
