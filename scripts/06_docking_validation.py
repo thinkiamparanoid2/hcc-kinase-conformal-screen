@@ -7,15 +7,28 @@ Step 06 - Orthogonal structure-based validation (AutoDock Vina)
 
 WHAT CHANGED AND WHY:
 
-* RMSD IS SYMMETRY-CORRECTED AND TOP-1 IS THE HEADLINE.
+* RMSD IS SYMMETRY-CORRECTED, IN PLACE, AND TOP-1 IS THE HEADLINE.
   The old code compared two separately parsed PDBQT atom lists element-wise,
   assuming identical atom ordering and ignoring molecular symmetry; Erlotinib and
   Sorafenib both have symmetry-equivalent atoms, so those numbers could be wrong in
-  either direction. RMSD now goes through RDKit `GetBestRMS`, which does the
-  substructure matching. More importantly, the reported control is TOP-1 RMSD --
-  pose prediction. Best-of-N is reported beside it and labelled as a sampling
-  diagnostic, because quoting best-of-9 as the control is how a 7.8 A top-1 pose
-  gets presented as 1.2 A.
+  either direction. RMSD now goes through RDKit, which does the substructure
+  matching, on the flattened heavy-atom graph -- the crystal reference and the
+  Open Babel pose perceive bond orders differently for the same molecule, and
+  matching on perceived bonds returned None for every target.
+
+  It is measured IN PLACE (`CalcRMS`), not after superimposing the pose on the
+  reference (`GetBestRMS`). Superimposing answers whether the conformer is right
+  once placement is ignored, which flatters a pose docked into the wrong
+  subpocket: EGFR erlotinib reads 1.76 A superimposed and 8.00 A where docking
+  actually put it. The superimposed figure is kept beside it, labelled a
+  diagnostic.
+
+  The reported control is TOP-1 -- pose prediction. Best-of-N is reported beside
+  it and labelled as a sampling diagnostic, because quoting best-of-9 as the
+  control is how an 8 A top-1 pose gets presented as 1.3 A. Where top-1 fails,
+  `best_pose_rank` and `affinity_gap_to_best_pose_kcal` say whether the search
+  missed the pose or the scoring function failed to rank it: in this pocket set
+  it is always the latter, by margins the scoring function cannot resolve.
 
 * THE ENRICHMENT CONTROL IS POWERED AND UNBIASED.
   Previously 12 actives versus 12 inactives, taken as the 12 MOST potent against
@@ -24,6 +37,20 @@ WHAT CHANGED AND WHY:
   and inactive classes (seeded), `N_PER_CLASS` default 50, property-matched
   selection on MW and rotatable bonds, bootstrap CIs on AUC, plus EF1%, EF5% and
   BEDROC, which are the metrics that describe a virtual screen.
+
+  Those three come with their own null. EF and BEDROC assume a large library with
+  a small active fraction, and this control is balanced by construction, so their
+  usual thresholds do not transfer: on 50 actives in 99 compounds a random
+  ranking returns BEDROC (alpha=20) around 0.5 with a 5-95% spread of 0.25 to
+  0.75, and the top 1% is one compound. Each metric is therefore reported against
+  a label-shuffled null, and `exceeds_null` is what says whether a number means
+  anything on this design.
+
+  What the negative class is matters as much. A true inactive is a ">" record,
+  where the assay ran and found nothing. Without those the negatives are measured
+  weak binders, which still occupy the pocket, so the AUC understates what the
+  same method would give against true non-binders. The run records which class it
+  had.
 
 * THE DOCKING BOX FITS THE LIGAND.
   A fixed 22 A cube for every pocket and every ligand meant large rigid ligands
