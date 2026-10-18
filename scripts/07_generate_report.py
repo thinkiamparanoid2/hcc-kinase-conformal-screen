@@ -751,6 +751,29 @@ def limitations_section():
             items.append(
                 f"Top-1 redocking fails the 2 A criterion for {', '.join(fails)}, so "
                 f"pose-level conclusions in those pockets are not supported.")
+        enr = [(t, ec) for t, ec in (dv.get("enrichment_control") or {}).items()
+               if isinstance(ec, dict) and ec.get("status") == "ok"]
+        if enr:
+            def _clears(ec, *metrics):
+                nb = ec.get("null_baselines") or {}
+                return any(isinstance(nb.get(m), dict) and nb[m].get("exceeds_null")
+                           for m in metrics)
+            no_signal = [t for t, ec in enr
+                         if not _clears(ec, "ROC_AUC", "EF5pct", "BEDROC_alpha20")]
+            if no_signal:
+                items.append(
+                    f"Docking does not enrich actives over the negative class for "
+                    f"{', '.join(no_signal)}: no metric clears its label-shuffled "
+                    f"null. A docking score therefore carries no validated "
+                    f"discriminative weight in those pockets and cannot be used to "
+                    f"support or filter a prediction there.")
+            if len(no_signal) < len(enr):
+                items.append(
+                    "Where docking does enrich, it does so inconsistently: no "
+                    "pocket shows both global separation and early recognition, so "
+                    "the enrichment control licenses a direction to confirm on a "
+                    "larger set rather than a general-purpose structure-based "
+                    "filter.")
         if dv.get("score_comparability_note"):
             items.append(dv["score_comparability_note"])
 

@@ -358,6 +358,10 @@ _Reason: results/predictions/consensus_hits.csv missing: there is no full-librar
 
 - Top-1 redocking fails the 2 A criterion for EGFR, FGFR4, so pose-level conclusions in those pockets are not supported.
 
+- Docking does not enrich actives over the negative class for EGFR: no metric clears its label-shuffled null. A docking score therefore carries no validated discriminative weight in those pockets and cannot be used to support or filter a prediction there.
+
+- Where docking does enrich, it does so inconsistently: no pocket shows both global separation and early recognition, so the enrichment control licenses a direction to confirm on a larger set rather than a general-purpose structure-based filter.
+
 - AutoDock Vina scores are empirical and receptor-specific. They are not transferable binding free energies, so a weaker score in one pocket than another is not evidence of selectivity. Compare within a target (see the <T>_vina_z columns), and treat any score weaker than -4.0 kcal/mol as a placement failure to investigate, not as a measured steric clash.
 
 - No experimental validation. Every candidate is a computational prediction and the paper claims nothing beyond that.
