@@ -1,0 +1,19 @@
+{
+  "target": "EGFR",
+  "n_raw_records": 9844,
+  "n_unparsable_structures": 0,
+  "n_unique_parents_before_noise_filter": 9786,
+  "n_dropped_replicate_sd_above_threshold": 4,
+  "max_replicate_sd": 1.0,
+  "n_final": 9782,
+  "n_exact": 9782,
+  "n_censored_lower_bound_potency": 0,
+  "n_censored_upper_bound_potency": 0,
+  "exact_active_prevalence_at_pIC50_6": 0.7489265998773257,
+  "replicate_sd_median_multi_measured": 0.04990835625085498,
+  "replicate_sd_n_multi_measured": 53,
+  "label_variance_exact": 1.78555316041142,
+  "r2_ceiling_from_label_noise": 0.9986050014757957,
+  "source": "recurated_from_existing_csv",
+  "censored_records_available": false
+}
