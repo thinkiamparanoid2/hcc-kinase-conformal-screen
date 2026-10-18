@@ -107,17 +107,18 @@ def load_model(target, conformal):
     """Reload whichever family step 04 selected and persisted."""
     path = conformal.get("model_path")
     family = conformal.get("model_family", "")
-    if path and path.endswith(".pkl") and os.path.exists(path):
-        import pickle
-        with open(path, "rb") as f:
-            return pickle.load(f)
+    if path and path.endswith((".joblib", ".pkl")) and os.path.exists(path):
+        import joblib
+        return joblib.load(path)
     if path and path.endswith(".json") and os.path.exists(path):
         from xgboost import XGBRegressor
         m = XGBRegressor()
         m.load_model(path)
         return m
     raise FileNotFoundError(
-        f"No persisted model for {target} ({family}); re-run step 04.")
+        f"No persisted model for {target} ({family}) at {path!r}. Model artifacts "
+        f"are not tracked in git because a fitted forest exceeds GitHub's file "
+        f"size limit; regenerate them with `python scripts/04_conformal_ad_models.py`.")
 
 
 def feature_slice(conformal, cols):
@@ -277,6 +278,13 @@ def main():
         summary["targets"][t] = {
             "model": cj.get("model_family"),
             "tau": tau,
+            "tau_is_binding": cj.get("tau_is_binding"),
+            "in_AD_caveat": (
+                None if cj.get("tau_is_binding") is not False else
+                "tau is non-binding for this target (step 04 found every "
+                "calibration bin inside the width budget), so `in_AD` admits the "
+                "whole library and the in-domain counts below are not a "
+                "calibrated-reliable subset."),
             "in_AD": int(d["in_AD"].sum()),
             "in_AD_frac": float(d["in_AD"].mean()),
             "median_sim_train": float(d["sim_train"].median()),

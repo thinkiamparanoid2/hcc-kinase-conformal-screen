@@ -256,6 +256,11 @@ def domain_section():
             f"- tau = **{r['tau']}** (95% CI "
             f"{tau_ci.get('lo')}-{tau_ci.get('hi')}); held-out molecules inside the "
             f"domain: {r['frac_test_in_AD'] * 100:.1f}%\n")
+        if r.get("tau_interpretation"):
+            lines.append(f"- {r['tau_interpretation']}\n")
+        if r.get("tau_by_budget"):
+            lines.append("**tau at other width budgets**\n")
+            lines.append(md_table(pd.DataFrame(r["tau_by_budget"])) + "\n")
         bt = pd.DataFrame(r["bin_table"])
         bt["bin"] = bt.apply(
             lambda x: f"[{x.sim_lo:.2f}, {min(x.sim_hi, 1.0):.2f})", axis=1)
@@ -554,6 +559,15 @@ def limitations_section():
                     f"(n = {rr['test_NP_like']['n']} for {t}); its metrics carry wide "
                     f"confidence intervals and support a direction, not a point claim.")
                 break
+
+    for t in C.TARGETS:
+        rr = C.load_json(os.path.join(C.METRICS_DIR, f"final_model_{t}.json"))
+        if rr and rr.get("tau_is_binding") is False:
+            items.append(
+                f"The applicability-domain threshold is non-binding for {t}: "
+                f"{rr.get('tau_interpretation', '')} Any in-domain hit count for "
+                f"this target is therefore a count of the whole library, not of a "
+                f"calibrated-reliable subset.")
 
     s = C.load_json(os.path.join(C.METRICS_DIR, "screen_summary.json"))
     if s:
