@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software or its results, please cite it."
+title: "Domain-calibrated machine learning and structure-based virtual screening of natural products against HCC kinases"
+abstract: >-
+  A reproducible pipeline that quantifies how far a conformal applicability
+  domain calibrated on synthetic kinase inhibitors transfers to natural-product
+  chemical space, with orthogonal structure-based validation.
+authors:
+  - family-names: Maharandwa
+    given-names: ACP
+repository-code: "https://github.com/thinkiamparanoid2/hcc-kinase-conformal-screen"
+license: MIT
+keywords:
+  - conformal prediction
+  - applicability domain
+  - QSAR
+  - virtual screening
+  - natural products
+  - kinase inhibitors

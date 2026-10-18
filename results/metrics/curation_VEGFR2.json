@@ -1,0 +1,20 @@
+{
+  "target": "VEGFR2",
+  "n_raw_records": 9181,
+  "n_unparsable_structures": 0,
+  "n_unique_parents_before_noise_filter": 9181,
+  "n_dropped_replicate_sd_above_threshold": 0,
+  "max_replicate_sd": 1.0,
+  "n_final": 9181,
+  "n_exact": 9181,
+  "n_censored_lower_bound_potency": 0,
+  "n_censored_upper_bound_potency": 0,
+  "exact_active_prevalence_at_pIC50_6": 0.7673456050539157,
+  "replicate_sd_median_multi_measured": null,
+  "replicate_sd_n_multi_measured": null,
+  "label_variance_exact": 1.30407146829635,
+  "r2_ceiling_from_label_noise": null,
+  "source": "recurated_from_existing_csv",
+  "label_noise_note": "Replicate spread is not recoverable from a pre-aggregated CSV, so the label-noise ceiling on R2 is unknown here. Re-run step 01 with network access to measure it from the raw ChEMBL records.",
+  "censored_records_available": false
+}
