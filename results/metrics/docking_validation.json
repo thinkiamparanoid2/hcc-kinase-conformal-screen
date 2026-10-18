@@ -1,0 +1,104 @@
+{
+  "redocking_control": {
+    "EGFR": {
+      "ligand": "Erlotinib (AQ4)",
+      "center": [
+        22.01,
+        0.25,
+        52.79
+      ],
+      "box_size": [
+        22.0,
+        22.0,
+        22.0
+      ],
+      "affinity_kcal_mol": -7.72,
+      "rmsd_top1_A": 7.839,
+      "rmsd_best_of_9_A": 1.242,
+      "n_heavy_atoms": 29,
+      "secs": 0.0
+    },
+    "FGFR4": {
+      "ligand": "BLU9931-analog (6LF)",
+      "center": [
+        -40.88,
+        -16.01,
+        378.17
+      ],
+      "box_size": [
+        22.0,
+        22.0,
+        22.0
+      ],
+      "affinity_kcal_mol": -9.127,
+      "rmsd_top1_A": 3.334,
+      "rmsd_best_of_9_A": 1.811,
+      "n_heavy_atoms": 30,
+      "secs": 0.0
+    },
+    "VEGFR2": {
+      "ligand": "Sorafenib (BAX)",
+      "center": [
+        -24.62,
+        -0.39,
+        -10.93
+      ],
+      "box_size": [
+        22.0,
+        22.0,
+        22.0
+      ],
+      "affinity_kcal_mol": -12.254,
+      "rmsd_top1_A": 0.833,
+      "rmsd_best_of_9_A": 0.833,
+      "n_heavy_atoms": 32,
+      "secs": 0.0
+    }
+  },
+  "enrichment_control": {
+    "FGFR4": {
+      "n_actives": 12,
+      "n_inactives": 12,
+      "active_mean_kcal": -9.73,
+      "active_median_kcal": -9.55,
+      "inactive_mean_kcal": -8.51,
+      "inactive_median_kcal": -8.18,
+      "docking_ROC_AUC": 0.826,
+      "mannwhitney_p": 0.0036,
+      "secs": 0.2
+    },
+    "EGFR": {
+      "n_actives": 12,
+      "n_inactives": 12,
+      "active_mean_kcal": -9.04,
+      "active_median_kcal": -9.02,
+      "inactive_mean_kcal": -9.04,
+      "inactive_median_kcal": -8.99,
+      "docking_ROC_AUC": 0.521,
+      "mannwhitney_p": 0.4426,
+      "secs": 0.2
+    },
+    "VEGFR2": {
+      "n_actives": 12,
+      "n_inactives": 12,
+      "active_mean_kcal": -10.8,
+      "active_median_kcal": -10.97,
+      "inactive_mean_kcal": -8.35,
+      "inactive_median_kcal": -8.24,
+      "docking_ROC_AUC": 0.931,
+      "mannwhitney_p": 0.0002,
+      "secs": 0.2
+    }
+  },
+  "candidates_summary": {
+    "n_novel_docked": 25,
+    "n_rediscovery_docked": 8,
+    "novel_mean_kcal": -7.96,
+    "rediscovery_mean_kcal": -8.89,
+    "per_target_novel_mean_kcal": {
+      "FGFR4": -10.09,
+      "EGFR": -10.9,
+      "VEGFR2": -2.88
+    }
+  }
+}

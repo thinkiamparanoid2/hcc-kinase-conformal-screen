@@ -1,0 +1,20 @@
+# Python & IDE caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.vscode/
+.idea/
+.codegraph/
+*.log
+
+# Local archive of legacy v1/QML experiments & scratch notes
+archive/
+
+# Large external/regenerable datasets (>25 MB; see data/README.md)
+data/ligands_phytochemical/phytochemical_screening_set.csv
+data/ligands_phytochemical/*.zip
+data/features/*_training_features.csv
+
+# Full 738k per-target raw screen dumps (~40 MB each; consensus shortlists are tracked)
+results/predictions/*_screen_full.csv.gz

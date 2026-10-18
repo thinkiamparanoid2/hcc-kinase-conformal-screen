@@ -1,0 +1,483 @@
+MODEL 1
+REMARK VINA RESULT:   -12.254      0.000      0.000
+REMARK INTER + INTRA:         -16.749
+REMARK INTER:                 -16.552
+REMARK INTRA:                  -0.197
+REMARK UNBOUND:                -0.197
+REMARK  Name = results\docking_poses\controls\VEGFR2_BAX_crystal.pdb
+REMARK  7 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: C2_2  and  N12_26
+REMARK    2  A    between atoms: C16_6  and  N14_27
+REMARK    3  A    between atoms: C19_9  and  O22_12
+REMARK    4  A    between atoms: O22_12  and  C23_29
+REMARK    5  A    between atoms: C27_15  and  C29_31
+REMARK    6  A    between atoms: N30_17  and  C31_18
+REMARK    7  A    between atoms: C6_20  and  C7_21
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      1  C16 BAX A1500     -25.244  -1.856 -12.135  0.00  0.00    +0.075 A 
+ATOM      2  C17 BAX A1500     -25.433  -1.481 -13.461  0.00  0.00    +0.020 A 
+ATOM      3  C18 BAX A1500     -24.353  -1.005 -14.205  0.00  0.00    +0.039 A 
+ATOM      4  C19 BAX A1500     -23.098  -0.902 -13.601  0.00  0.00    +0.145 A 
+ATOM      5  C20 BAX A1500     -22.881  -1.269 -12.280  0.00  0.00    +0.039 A 
+ATOM      6  C21 BAX A1500     -23.964  -1.745 -11.550  0.00  0.00    +0.020 A 
+ENDROOT
+BRANCH   1   9
+ATOM      7  C13 BAX A1500     -26.664  -1.977 -10.119  0.00  0.00    +0.348 C 
+ATOM      8  N12 BAX A1500     -27.667  -2.763  -9.567  0.00  0.00    -0.161 N 
+ATOM      9  N14 BAX A1500     -26.369  -2.331 -11.429  0.00  0.00    -0.161 N 
+ATOM     10  O15 BAX A1500     -26.089  -1.088  -9.517  0.00  0.00    -0.248 OA
+ATOM     11  H   BAX A1500     -28.057  -3.474 -10.124  0.00  0.00    +0.000 HD
+ATOM     12  H   BAX A1500     -26.980  -2.948 -11.892  0.00  0.00    +0.000 HD
+BRANCH   8  14
+ATOM     13  C1  BAX A1500     -28.155  -1.363  -7.599  0.00  0.00    +0.021 A 
+ATOM     14  C2  BAX A1500     -28.157  -2.605  -8.261  0.00  0.00    +0.075 A 
+ATOM     15  C3  BAX A1500     -28.661  -3.734  -7.609  0.00  0.00    +0.018 A 
+ATOM     16  C4  BAX A1500     -29.160  -3.631  -6.306  0.00  0.00    +0.013 A 
+ATOM     17  C5  BAX A1500     -29.159  -2.382  -5.665  0.00  0.00    +0.062 A 
+ATOM     18  C6  BAX A1500     -28.645  -1.235  -6.295  0.00  0.00    +0.083 A 
+ATOM     19 CL11 BAX A1500     -29.784  -2.297  -4.058  0.00  0.00    -0.082 Cl
+BRANCH  18  20
+ATOM     20  C7  BAX A1500     -28.615   0.118  -5.625  0.00  0.00    +0.419 C 
+ATOM     21  F8  BAX A1500     -28.199   1.080  -6.478  0.00  0.00    -0.166 F 
+ATOM     22  F9  BAX A1500     -27.808   0.177  -4.531  0.00  0.00    -0.166 F 
+ATOM     23  F10 BAX A1500     -29.826   0.549  -5.194  0.00  0.00    -0.166 F 
+ENDBRANCH  18  20
+ENDBRANCH   8  14
+ENDBRANCH   1   9
+BRANCH   4  24
+ATOM     24  O22 BAX A1500     -22.041  -0.445 -14.354  0.00  0.00    -0.453 OA
+BRANCH  24  29
+ATOM     25  C24 BAX A1500     -22.474   1.974 -13.911  0.00  0.00    +0.058 A 
+ATOM     26  C25 BAX A1500     -21.880   3.238 -13.986  0.00  0.00    +0.102 A 
+ATOM     27  C27 BAX A1500     -19.874   2.371 -14.823  0.00  0.00    +0.139 A 
+ATOM     28  C28 BAX A1500     -20.381   1.075 -14.794  0.00  0.00    +0.061 A 
+ATOM     29  C23 BAX A1500     -21.685   0.888 -14.330  0.00  0.00    +0.149 A 
+ATOM     30  N26 BAX A1500     -20.616   3.448 -14.439  0.00  0.00    -0.239 NA
+BRANCH  27  33
+ATOM     31  N30 BAX A1500     -17.987   3.834 -15.492  0.00  0.00    -0.198 N 
+ATOM     32  C31 BAX A1500     -16.636   4.063 -15.988  0.00  0.00    +0.139 C 
+ATOM     33  C29 BAX A1500     -18.476   2.553 -15.327  0.00  0.00    +0.283 C 
+ATOM     34  O32 BAX A1500     -17.812   1.552 -15.603  0.00  0.00    -0.267 OA
+ATOM     35  H   BAX A1500     -18.559   4.604 -15.272  0.00  0.00    +0.000 HD
+ENDBRANCH  27  33
+ENDBRANCH  24  29
+ENDBRANCH   4  24
+TORSDOF 6
+ENDMDL
+MODEL 2
+REMARK VINA RESULT:   -11.638      1.768      2.238
+REMARK INTER + INTRA:         -15.918
+REMARK INTER:                 -16.023
+REMARK INTRA:                   0.105
+REMARK UNBOUND:                -0.197
+REMARK  Name = results\docking_poses\controls\VEGFR2_BAX_crystal.pdb
+REMARK  7 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: C2_2  and  N12_26
+REMARK    2  A    between atoms: C16_6  and  N14_27
+REMARK    3  A    between atoms: C19_9  and  O22_12
+REMARK    4  A    between atoms: O22_12  and  C23_29
+REMARK    5  A    between atoms: C27_15  and  C29_31
+REMARK    6  A    between atoms: N30_17  and  C31_18
+REMARK    7  A    between atoms: C6_20  and  C7_21
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      1  C16 BAX A1500     -25.257  -1.882 -12.183  0.00  0.00    +0.075 A 
+ATOM      2  C17 BAX A1500     -25.474  -1.474 -13.495  0.00  0.00    +0.020 A 
+ATOM      3  C18 BAX A1500     -24.410  -0.979 -14.250  0.00  0.00    +0.039 A 
+ATOM      4  C19 BAX A1500     -23.142  -0.892 -13.671  0.00  0.00    +0.145 A 
+ATOM      5  C20 BAX A1500     -22.897  -1.292 -12.365  0.00  0.00    +0.039 A 
+ATOM      6  C21 BAX A1500     -23.964  -1.786 -11.624  0.00  0.00    +0.020 A 
+ENDROOT
+BRANCH   1   9
+ATOM      7  C13 BAX A1500     -26.649  -2.030 -10.149  0.00  0.00    +0.348 C 
+ATOM      8  N12 BAX A1500     -27.635  -2.831  -9.588  0.00  0.00    -0.161 N 
+ATOM      9  N14 BAX A1500     -26.366  -2.374 -11.465  0.00  0.00    -0.161 N 
+ATOM     10  O15 BAX A1500     -26.077  -1.137  -9.551  0.00  0.00    -0.248 OA
+ATOM     11  H   BAX A1500     -28.024  -3.544 -10.144  0.00  0.00    +0.000 HD
+ATOM     12  H   BAX A1500     -26.976  -2.996 -11.923  0.00  0.00    +0.000 HD
+BRANCH   8  14
+ATOM     13  C1  BAX A1500     -28.804  -3.711  -7.607  0.00  0.00    +0.021 A 
+ATOM     14  C2  BAX A1500     -28.110  -2.686  -8.276  0.00  0.00    +0.075 A 
+ATOM     15  C3  BAX A1500     -27.876  -1.471  -7.625  0.00  0.00    +0.018 A 
+ATOM     16  C4  BAX A1500     -28.330  -1.274  -6.316  0.00  0.00    +0.013 A 
+ATOM     17  C5  BAX A1500     -29.013  -2.312  -5.661  0.00  0.00    +0.062 A 
+ATOM     18  C6  BAX A1500     -29.271  -3.537  -6.299  0.00  0.00    +0.083 A 
+ATOM     19 CL11 BAX A1500     -29.556  -2.028  -4.047  0.00  0.00    -0.082 Cl
+BRANCH  18  20
+ATOM     20  C7  BAX A1500     -30.017  -4.664  -5.626  0.00  0.00    +0.419 C 
+ATOM     21  F8  BAX A1500     -31.182  -4.235  -5.093  0.00  0.00    -0.166 F 
+ATOM     22  F9  BAX A1500     -29.321  -5.272  -4.628  0.00  0.00    -0.166 F 
+ATOM     23  F10 BAX A1500     -30.379  -5.665  -6.465  0.00  0.00    -0.166 F 
+ENDBRANCH  18  20
+ENDBRANCH   8  14
+ENDBRANCH   1   9
+BRANCH   4  24
+ATOM     24  O22 BAX A1500     -22.101  -0.416 -14.435  0.00  0.00    -0.453 OA
+BRANCH  24  29
+ATOM     25  C24 BAX A1500     -22.516   1.995 -13.940  0.00  0.00    +0.058 A 
+ATOM     26  C25 BAX A1500     -21.906   3.254 -13.972  0.00  0.00    +0.102 A 
+ATOM     27  C27 BAX A1500     -19.894   2.385 -14.789  0.00  0.00    +0.139 A 
+ATOM     28  C28 BAX A1500     -20.416   1.095 -14.803  0.00  0.00    +0.061 A 
+ATOM     29  C23 BAX A1500     -21.732   0.911 -14.370  0.00  0.00    +0.149 A 
+ATOM     30  N26 BAX A1500     -20.631   3.460 -14.394  0.00  0.00    -0.239 NA
+BRANCH  27  33
+ATOM     31  N30 BAX A1500     -17.993   3.842 -15.432  0.00  0.00    -0.198 N 
+ATOM     32  C31 BAX A1500     -16.631   4.067 -15.897  0.00  0.00    +0.139 C 
+ATOM     33  C29 BAX A1500     -18.484   2.562 -15.260  0.00  0.00    +0.283 C 
+ATOM     34  O32 BAX A1500     -17.811   1.559 -15.504  0.00  0.00    -0.267 OA
+ATOM     35  H   BAX A1500     -18.572   4.614 -15.238  0.00  0.00    +0.000 HD
+ENDBRANCH  27  33
+ENDBRANCH  24  29
+ENDBRANCH   4  24
+TORSDOF 6
+ENDMDL
+MODEL 3
+REMARK VINA RESULT:   -10.796      1.437      2.025
+REMARK INTER + INTRA:         -14.781
+REMARK INTER:                 -14.706
+REMARK INTRA:                  -0.074
+REMARK UNBOUND:                -0.197
+REMARK  Name = results\docking_poses\controls\VEGFR2_BAX_crystal.pdb
+REMARK  7 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: C2_2  and  N12_26
+REMARK    2  A    between atoms: C16_6  and  N14_27
+REMARK    3  A    between atoms: C19_9  and  O22_12
+REMARK    4  A    between atoms: O22_12  and  C23_29
+REMARK    5  A    between atoms: C27_15  and  C29_31
+REMARK    6  A    between atoms: N30_17  and  C31_18
+REMARK    7  A    between atoms: C6_20  and  C7_21
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      1  C16 BAX A1500     -26.596  -1.644 -11.754  0.00  0.00    +0.075 A 
+ATOM      2  C17 BAX A1500     -25.419  -1.286 -11.105  0.00  0.00    +0.020 A 
+ATOM      3  C18 BAX A1500     -24.279  -0.991 -11.854  0.00  0.00    +0.039 A 
+ATOM      4  C19 BAX A1500     -24.336  -1.069 -13.246  0.00  0.00    +0.145 A 
+ATOM      5  C20 BAX A1500     -25.497  -1.423 -13.921  0.00  0.00    +0.039 A 
+ATOM      6  C21 BAX A1500     -26.626  -1.712 -13.163  0.00  0.00    +0.020 A 
+ENDROOT
+BRANCH   1   9
+ATOM      7  C13 BAX A1500     -27.633  -2.395  -9.643  0.00  0.00    +0.348 C 
+ATOM      8  N12 BAX A1500     -28.853  -2.843  -9.155  0.00  0.00    -0.161 N 
+ATOM      9  N14 BAX A1500     -27.718  -1.932 -10.949  0.00  0.00    -0.161 N 
+ATOM     10  O15 BAX A1500     -26.595  -2.422  -9.006  0.00  0.00    -0.248 OA
+ATOM     11  H   BAX A1500     -29.634  -2.802  -9.753  0.00  0.00    +0.000 HD
+ATOM     12  H   BAX A1500     -28.613  -1.797 -11.336  0.00  0.00    +0.000 HD
+BRANCH   8  14
+ATOM     13  C1  BAX A1500     -29.081  -2.524  -6.723  0.00  0.00    +0.021 A 
+ATOM     14  C2  BAX A1500     -29.041  -3.352  -7.860  0.00  0.00    +0.075 A 
+ATOM     15  C3  BAX A1500     -29.189  -4.734  -7.714  0.00  0.00    +0.018 A 
+ATOM     16  C4  BAX A1500     -29.377  -5.292  -6.445  0.00  0.00    +0.013 A 
+ATOM     17  C5  BAX A1500     -29.425  -4.449  -5.322  0.00  0.00    +0.062 A 
+ATOM     18  C6  BAX A1500     -29.264  -3.058  -5.442  0.00  0.00    +0.083 A 
+ATOM     19 CL11 BAX A1500     -29.658  -5.178  -3.775  0.00  0.00    -0.082 Cl
+BRANCH  18  20
+ATOM     20  C7  BAX A1500     -29.294  -2.129  -4.252  0.00  0.00    +0.419 C 
+ATOM     21  F8  BAX A1500     -30.399  -2.327  -3.500  0.00  0.00    -0.166 F 
+ATOM     22  F9  BAX A1500     -29.264  -0.809  -4.579  0.00  0.00    -0.166 F 
+ATOM     23  F10 BAX A1500     -28.263  -2.303  -3.390  0.00  0.00    -0.166 F 
+ENDBRANCH  18  20
+ENDBRANCH   8  14
+ENDBRANCH   1   9
+BRANCH   4  24
+ATOM     24  O22 BAX A1500     -23.207  -0.760 -13.970  0.00  0.00    -0.453 OA
+BRANCH  24  29
+ATOM     25  C24 BAX A1500     -23.395   1.705 -13.620  0.00  0.00    +0.058 A 
+ATOM     26  C25 BAX A1500     -22.676   2.899 -13.740  0.00  0.00    +0.102 A 
+ATOM     27  C27 BAX A1500     -20.768   1.805 -14.534  0.00  0.00    +0.139 A 
+ATOM     28  C28 BAX A1500     -21.403   0.568 -14.459  0.00  0.00    +0.061 A 
+ATOM     29  C23 BAX A1500     -22.720   0.530 -13.994  0.00  0.00    +0.149 A 
+ATOM     30  N26 BAX A1500     -21.398   2.964 -14.195  0.00  0.00    -0.239 NA
+BRANCH  27  33
+ATOM     31  N30 BAX A1500     -18.797   3.034 -15.401  0.00  0.00    -0.198 N 
+ATOM     32  C31 BAX A1500     -17.432   3.105 -15.906  0.00  0.00    +0.139 C 
+ATOM     33  C29 BAX A1500     -19.358   1.825 -15.038  0.00  0.00    +0.283 C 
+ATOM     34  O32 BAX A1500     -18.750   0.759 -15.138  0.00  0.00    -0.267 OA
+ATOM     35  H   BAX A1500     -19.326   3.860 -15.318  0.00  0.00    +0.000 HD
+ENDBRANCH  27  33
+ENDBRANCH  24  29
+ENDBRANCH   4  24
+TORSDOF 6
+ENDMDL
+MODEL 4
+REMARK VINA RESULT:   -10.085      6.016     11.611
+REMARK INTER + INTRA:         -13.820
+REMARK INTER:                 -13.538
+REMARK INTRA:                  -0.282
+REMARK UNBOUND:                -0.197
+REMARK  Name = results\docking_poses\controls\VEGFR2_BAX_crystal.pdb
+REMARK  7 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: C2_2  and  N12_26
+REMARK    2  A    between atoms: C16_6  and  N14_27
+REMARK    3  A    between atoms: C19_9  and  O22_12
+REMARK    4  A    between atoms: O22_12  and  C23_29
+REMARK    5  A    between atoms: C27_15  and  C29_31
+REMARK    6  A    between atoms: N30_17  and  C31_18
+REMARK    7  A    between atoms: C6_20  and  C7_21
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      1  C16 BAX A1500     -24.731  -1.333 -12.750  0.00  0.00    +0.075 A 
+ATOM      2  C17 BAX A1500     -25.968  -1.511 -13.359  0.00  0.00    +0.020 A 
+ATOM      3  C18 BAX A1500     -27.117  -1.612 -12.573  0.00  0.00    +0.039 A 
+ATOM      4  C19 BAX A1500     -27.003  -1.542 -11.184  0.00  0.00    +0.145 A 
+ATOM      5  C20 BAX A1500     -25.781  -1.364 -10.549  0.00  0.00    +0.039 A 
+ATOM      6  C21 BAX A1500     -24.645  -1.262 -11.343  0.00  0.00    +0.020 A 
+ENDROOT
+BRANCH   1   9
+ATOM      7  C13 BAX A1500     -22.715  -0.168 -13.574  0.00  0.00    +0.348 C 
+ATOM      8  N12 BAX A1500     -21.844  -0.181 -14.655  0.00  0.00    -0.161 N 
+ATOM      9  N14 BAX A1500     -23.602  -1.237 -13.591  0.00  0.00    -0.161 N 
+ATOM     10  O15 BAX A1500     -22.719   0.694 -12.715  0.00  0.00    -0.248 OA
+ATOM     11  H   BAX A1500     -21.932  -0.908 -15.312  0.00  0.00    +0.000 HD
+ATOM     12  H   BAX A1500     -23.434  -1.970 -14.226  0.00  0.00    +0.000 HD
+BRANCH   8  14
+ATOM     13  C1  BAX A1500     -19.477   0.453 -14.910  0.00  0.00    +0.021 A 
+ATOM     14  C2  BAX A1500     -20.844   0.782 -14.868  0.00  0.00    +0.075 A 
+ATOM     15  C3  BAX A1500     -21.241   2.111 -15.040  0.00  0.00    +0.018 A 
+ATOM     16  C4  BAX A1500     -20.284   3.109 -15.253  0.00  0.00    +0.013 A 
+ATOM     17  C5  BAX A1500     -18.925   2.761 -15.303  0.00  0.00    +0.062 A 
+ATOM     18  C6  BAX A1500     -18.500   1.434 -15.119  0.00  0.00    +0.083 A 
+ATOM     19 CL11 BAX A1500     -17.777   4.023 -15.568  0.00  0.00    -0.082 Cl
+BRANCH  18  20
+ATOM     20  C7  BAX A1500     -17.045   1.032 -15.149  0.00  0.00    +0.419 C 
+ATOM     21  F8  BAX A1500     -16.326   1.719 -14.234  0.00  0.00    -0.166 F 
+ATOM     22  F9  BAX A1500     -16.443   1.219 -16.354  0.00  0.00    -0.166 F 
+ATOM     23  F10 BAX A1500     -16.825  -0.270 -14.842  0.00  0.00    -0.166 F 
+ENDBRANCH  18  20
+ENDBRANCH   8  14
+ENDBRANCH   1   9
+BRANCH   4  24
+ATOM     24  O22 BAX A1500     -28.148  -1.627 -10.425  0.00  0.00    -0.453 OA
+BRANCH  24  29
+ATOM     25  C24 BAX A1500     -27.714  -1.026  -8.041  0.00  0.00    +0.058 A 
+ATOM     26  C25 BAX A1500     -27.719  -1.556  -6.746  0.00  0.00    +0.102 A 
+ATOM     27  C27 BAX A1500     -28.407  -3.665  -7.488  0.00  0.00    +0.139 A 
+ATOM     28  C28 BAX A1500     -28.423  -3.234  -8.811  0.00  0.00    +0.061 A 
+ATOM     29  C23 BAX A1500     -28.078  -1.906  -9.076  0.00  0.00    +0.149 A 
+ATOM     30  N26 BAX A1500     -28.044  -2.844  -6.463  0.00  0.00    -0.239 NA
+BRANCH  27  33
+ATOM     31  N30 BAX A1500     -28.290  -6.073  -8.067  0.00  0.00    -0.198 N 
+ATOM     32  C31 BAX A1500     -28.628  -7.475  -7.858  0.00  0.00    +0.139 C 
+ATOM     33  C29 BAX A1500     -28.776  -5.092  -7.225  0.00  0.00    +0.283 C 
+ATOM     34  O32 BAX A1500     -29.523  -5.345  -6.279  0.00  0.00    -0.267 OA
+ATOM     35  H   BAX A1500     -27.707  -5.822  -8.819  0.00  0.00    +0.000 HD
+ENDBRANCH  27  33
+ENDBRANCH  24  29
+ENDBRANCH   4  24
+TORSDOF 6
+ENDMDL
+MODEL 5
+REMARK VINA RESULT:    -9.979      3.052      3.620
+REMARK INTER + INTRA:         -13.677
+REMARK INTER:                 -13.166
+REMARK INTRA:                  -0.511
+REMARK UNBOUND:                -0.197
+REMARK  Name = results\docking_poses\controls\VEGFR2_BAX_crystal.pdb
+REMARK  7 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: C2_2  and  N12_26
+REMARK    2  A    between atoms: C16_6  and  N14_27
+REMARK    3  A    between atoms: C19_9  and  O22_12
+REMARK    4  A    between atoms: O22_12  and  C23_29
+REMARK    5  A    between atoms: C27_15  and  C29_31
+REMARK    6  A    between atoms: N30_17  and  C31_18
+REMARK    7  A    between atoms: C6_20  and  C7_21
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      1  C16 BAX A1500     -26.884  -1.695 -11.265  0.00  0.00    +0.075 A 
+ATOM      2  C17 BAX A1500     -27.024  -1.846 -12.640  0.00  0.00    +0.020 A 
+ATOM      3  C18 BAX A1500     -25.933  -1.609 -13.477  0.00  0.00    +0.039 A 
+ATOM      4  C19 BAX A1500     -24.716  -1.212 -12.918  0.00  0.00    +0.145 A 
+ATOM      5  C20 BAX A1500     -24.548  -1.053 -11.549  0.00  0.00    +0.039 A 
+ATOM      6  C21 BAX A1500     -25.643  -1.295 -10.727  0.00  0.00    +0.020 A 
+ENDROOT
+BRANCH   1   9
+ATOM      7  C13 BAX A1500     -27.983  -2.671  -9.281  0.00  0.00    +0.348 C 
+ATOM      8  N12 BAX A1500     -29.251  -2.998  -8.817  0.00  0.00    -0.161 N 
+ATOM      9  N14 BAX A1500     -28.019  -1.947 -10.467  0.00  0.00    -0.161 N 
+ATOM     10  O15 BAX A1500     -26.951  -2.998  -8.725  0.00  0.00    -0.248 OA
+ATOM     11  H   BAX A1500     -30.027  -2.708  -9.349  0.00  0.00    +0.000 HD
+ATOM     12  H   BAX A1500     -28.886  -1.590 -10.766  0.00  0.00    +0.000 HD
+BRANCH   8  14
+ATOM     13  C1  BAX A1500     -29.424  -5.122  -7.582  0.00  0.00    +0.021 A 
+ATOM     14  C2  BAX A1500     -29.492  -3.717  -7.637  0.00  0.00    +0.075 A 
+ATOM     15  C3  BAX A1500     -29.810  -2.996  -6.483  0.00  0.00    +0.018 A 
+ATOM     16  C4  BAX A1500     -30.061  -3.665  -5.280  0.00  0.00    +0.013 A 
+ATOM     17  C5  BAX A1500     -29.979  -5.066  -5.242  0.00  0.00    +0.062 A 
+ATOM     18  C6  BAX A1500     -29.674  -5.815  -6.392  0.00  0.00    +0.083 A 
+ATOM     19 CL11 BAX A1500     -30.295  -5.854  -3.739  0.00  0.00    -0.082 Cl
+BRANCH  18  20
+ATOM     20  C7  BAX A1500     -29.596  -7.323  -6.386  0.00  0.00    +0.419 C 
+ATOM     21  F8  BAX A1500     -30.762  -7.874  -5.982  0.00  0.00    -0.166 F 
+ATOM     22  F9  BAX A1500     -28.617  -7.824  -5.585  0.00  0.00    -0.166 F 
+ATOM     23  F10 BAX A1500     -29.370  -7.869  -7.605  0.00  0.00    -0.166 F 
+ENDBRANCH  18  20
+ENDBRANCH   8  14
+ENDBRANCH   1   9
+BRANCH   4  24
+ATOM     24  O22 BAX A1500     -23.646  -0.997 -13.755  0.00  0.00    -0.453 OA
+BRANCH  24  29
+ATOM     25  C24 BAX A1500     -23.671   1.492 -13.560  0.00  0.00    +0.058 A 
+ATOM     26  C25 BAX A1500     -22.876   2.627 -13.753  0.00  0.00    +0.102 A 
+ATOM     27  C27 BAX A1500     -21.046   1.362 -14.475  0.00  0.00    +0.139 A 
+ATOM     28  C28 BAX A1500     -21.760   0.176 -14.324  0.00  0.00    +0.061 A 
+ATOM     29  C23 BAX A1500     -23.075   0.254 -13.860  0.00  0.00    +0.149 A 
+ATOM     30  N26 BAX A1500     -21.597   2.578 -14.210  0.00  0.00    -0.239 NA
+BRANCH  27  33
+ATOM     31  N30 BAX A1500     -18.857   2.397 -15.013  0.00  0.00    -0.198 N 
+ATOM     32  C31 BAX A1500     -17.485   2.350 -15.502  0.00  0.00    +0.139 C 
+ATOM     33  C29 BAX A1500     -19.639   1.258 -14.978  0.00  0.00    +0.283 C 
+ATOM     34  O32 BAX A1500     -19.229   0.164 -15.369  0.00  0.00    -0.267 OA
+ATOM     35  H   BAX A1500     -19.232   3.253 -14.703  0.00  0.00    +0.000 HD
+ENDBRANCH  27  33
+ENDBRANCH  24  29
+ENDBRANCH   4  24
+TORSDOF 6
+ENDMDL
+MODEL 6
+REMARK VINA RESULT:    -9.682      6.040     11.798
+REMARK INTER + INTRA:         -13.275
+REMARK INTER:                 -12.466
+REMARK INTRA:                  -0.809
+REMARK UNBOUND:                -0.197
+REMARK  Name = results\docking_poses\controls\VEGFR2_BAX_crystal.pdb
+REMARK  7 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: C2_2  and  N12_26
+REMARK    2  A    between atoms: C16_6  and  N14_27
+REMARK    3  A    between atoms: C19_9  and  O22_12
+REMARK    4  A    between atoms: O22_12  and  C23_29
+REMARK    5  A    between atoms: C27_15  and  C29_31
+REMARK    6  A    between atoms: N30_17  and  C31_18
+REMARK    7  A    between atoms: C6_20  and  C7_21
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      1  C16 BAX A1500     -28.556  -3.826  -6.457  0.00  0.00    +0.075 A 
+ATOM      2  C17 BAX A1500     -29.223  -4.991  -6.819  0.00  0.00    +0.020 A 
+ATOM      3  C18 BAX A1500     -29.369  -6.022  -5.890  0.00  0.00    +0.039 A 
+ATOM      4  C19 BAX A1500     -28.831  -5.871  -4.611  0.00  0.00    +0.145 A 
+ATOM      5  C20 BAX A1500     -28.160  -4.719  -4.221  0.00  0.00    +0.039 A 
+ATOM      6  C21 BAX A1500     -28.025  -3.698  -5.155  0.00  0.00    +0.020 A 
+ENDROOT
+BRANCH   1   9
+ATOM      7  C13 BAX A1500     -27.798  -2.993  -8.654  0.00  0.00    +0.348 C 
+ATOM      8  N12 BAX A1500     -27.590  -1.796  -9.327  0.00  0.00    -0.161 N 
+ATOM      9  N14 BAX A1500     -28.437  -2.816  -7.434  0.00  0.00    -0.161 N 
+ATOM     10  O15 BAX A1500     -27.441  -4.079  -9.074  0.00  0.00    -0.248 OA
+ATOM     11  H   BAX A1500     -27.894  -0.964  -8.896  0.00  0.00    +0.000 HD
+ATOM     12  H   BAX A1500     -28.830  -1.934  -7.240  0.00  0.00    +0.000 HD
+BRANCH   8  14
+ATOM     13  C1  BAX A1500     -25.575  -1.649 -10.736  0.00  0.00    +0.021 A 
+ATOM     14  C2  BAX A1500     -26.973  -1.700 -10.584  0.00  0.00    +0.075 A 
+ATOM     15  C3  BAX A1500     -27.793  -1.652 -11.714  0.00  0.00    +0.018 A 
+ATOM     16  C4  BAX A1500     -27.229  -1.554 -12.991  0.00  0.00    +0.013 A 
+ATOM     17  C5  BAX A1500     -25.831  -1.516 -13.124  0.00  0.00    +0.062 A 
+ATOM     18  C6  BAX A1500     -24.986  -1.549 -12.002  0.00  0.00    +0.083 A 
+ATOM     19 CL11 BAX A1500     -25.175  -1.396 -14.716  0.00  0.00    -0.082 Cl
+BRANCH  18  20
+ATOM     20  C7  BAX A1500     -23.481  -1.491 -12.112  0.00  0.00    +0.419 C 
+ATOM     21  F8  BAX A1500     -22.890  -1.765 -10.929  0.00  0.00    -0.166 F 
+ATOM     22  F9  BAX A1500     -23.002  -0.289 -12.531  0.00  0.00    -0.166 F 
+ATOM     23  F10 BAX A1500     -22.956  -2.399 -12.970  0.00  0.00    -0.166 F 
+ENDBRANCH  18  20
+ENDBRANCH   8  14
+ENDBRANCH   1   9
+BRANCH   4  24
+ATOM     24  O22 BAX A1500     -28.997  -6.891  -3.703  0.00  0.00    -0.453 OA
+BRANCH  24  29
+ATOM     25  C24 BAX A1500     -29.435  -9.297  -4.204  0.00  0.00    +0.058 A 
+ATOM     26  C25 BAX A1500     -28.790 -10.501  -4.509  0.00  0.00    +0.102 A 
+ATOM     27  C27 BAX A1500     -26.670  -9.516  -4.437  0.00  0.00    +0.139 A 
+ATOM     28  C28 BAX A1500     -27.218  -8.276  -4.121  0.00  0.00    +0.061 A 
+ATOM     29  C23 BAX A1500     -28.607  -8.177  -4.011  0.00  0.00    +0.149 A 
+ATOM     30  N26 BAX A1500     -27.442 -10.624  -4.615  0.00  0.00    -0.239 NA
+BRANCH  27  33
+ATOM     31  N30 BAX A1500     -24.600  -9.591  -5.801  0.00  0.00    -0.198 N 
+ATOM     32  C31 BAX A1500     -23.155  -9.682  -5.960  0.00  0.00    +0.139 C 
+ATOM     33  C29 BAX A1500     -25.179  -9.602  -4.547  0.00  0.00    +0.283 C 
+ATOM     34  O32 BAX A1500     -24.515  -9.707  -3.514  0.00  0.00    -0.267 OA
+ATOM     35  H   BAX A1500     -25.172  -9.520  -6.599  0.00  0.00    +0.000 HD
+ENDBRANCH  27  33
+ENDBRANCH  24  29
+ENDBRANCH   4  24
+TORSDOF 6
+ENDMDL
+MODEL 7
+REMARK VINA RESULT:    -9.254      6.016     12.189
+REMARK INTER + INTRA:         -12.697
+REMARK INTER:                 -12.121
+REMARK INTRA:                  -0.576
+REMARK UNBOUND:                -0.197
+REMARK  Name = results\docking_poses\controls\VEGFR2_BAX_crystal.pdb
+REMARK  7 active torsions:
+REMARK  status: ('A' for Active; 'I' for Inactive)
+REMARK    1  A    between atoms: C2_2  and  N12_26
+REMARK    2  A    between atoms: C16_6  and  N14_27
+REMARK    3  A    between atoms: C19_9  and  O22_12
+REMARK    4  A    between atoms: O22_12  and  C23_29
+REMARK    5  A    between atoms: C27_15  and  C29_31
+REMARK    6  A    between atoms: N30_17  and  C31_18
+REMARK    7  A    between atoms: C6_20  and  C7_21
+REMARK                            x       y       z     vdW  Elec       q    Type
+REMARK                         _______ _______ _______ _____ _____    ______ ____
+ROOT
+ATOM      1  C16 BAX A1500     -28.588  -3.422  -6.411  0.00  0.00    +0.075 A 
+ATOM      2  C17 BAX A1500     -29.726  -4.194  -6.613  0.00  0.00    +0.020 A 
+ATOM      3  C18 BAX A1500     -30.052  -5.199  -5.701  0.00  0.00    +0.039 A 
+ATOM      4  C19 BAX A1500     -29.221  -5.420  -4.601  0.00  0.00    +0.145 A 
+ATOM      5  C20 BAX A1500     -28.078  -4.665  -4.374  0.00  0.00    +0.039 A 
+ATOM      6  C21 BAX A1500     -27.767  -3.665  -5.289  0.00  0.00    +0.020 A 
+ENDROOT
+BRANCH   1   9
+ATOM      7  C13 BAX A1500     -27.781  -2.679  -8.623  0.00  0.00    +0.348 C 
+ATOM      8  N12 BAX A1500     -27.357  -1.526  -9.271  0.00  0.00    -0.161 N 
+ATOM      9  N14 BAX A1500     -28.305  -2.421  -7.362  0.00  0.00    -0.161 N 
+ATOM     10  O15 BAX A1500     -27.688  -3.797  -9.095  0.00  0.00    -0.248 OA
+ATOM     11  H   BAX A1500     -27.453  -0.668  -8.799  0.00  0.00    +0.000 HD
+ATOM     12  H   BAX A1500     -28.490  -1.485  -7.120  0.00  0.00    +0.000 HD
+BRANCH   8  14
+ATOM     13  C1  BAX A1500     -25.410  -1.568 -10.779  0.00  0.00    +0.021 A 
+ATOM     14  C2  BAX A1500     -26.798  -1.512 -10.558  0.00  0.00    +0.075 A 
+ATOM     15  C3  BAX A1500     -27.668  -1.437 -11.649  0.00  0.00    +0.018 A 
+ATOM     16  C4  BAX A1500     -27.163  -1.417 -12.954  0.00  0.00    +0.013 A 
+ATOM     17  C5  BAX A1500     -25.775  -1.485 -13.155  0.00  0.00    +0.062 A 
+ATOM     18  C6  BAX A1500     -24.879  -1.547 -12.074  0.00  0.00    +0.083 A 
+ATOM     19 CL11 BAX A1500     -25.192  -1.459 -14.780  0.00  0.00    -0.082 Cl
+BRANCH  18  20
+ATOM     20  C7  BAX A1500     -23.381  -1.602 -12.258  0.00  0.00    +0.419 C 
+ATOM     21  F8  BAX A1500     -22.745  -1.766 -11.077  0.00  0.00    -0.166 F 
+ATOM     22  F9  BAX A1500     -22.854  -0.494 -12.846  0.00  0.00    -0.166 F 
+ATOM     23  F10 BAX A1500     -22.956  -2.641 -13.018  0.00  0.00    -0.166 F 
+ENDBRANCH  18  20
+ENDBRANCH   8  14
+ENDBRANCH   1   9
+BRANCH   4  24
+ATOM     24  O22 BAX A1500     -29.565  -6.404  -3.704  0.00  0.00    -0.453 OA
+BRANCH  24  29
+ATOM     25  C24 BAX A1500     -28.523  -8.586  -3.080  0.00  0.00    +0.058 A 
+ATOM     26  C25 BAX A1500     -28.299  -9.883  -3.554  0.00  0.00    +0.102 A 
+ATOM     27  C27 BAX A1500     -29.402  -9.458  -5.573  0.00  0.00    +0.139 A 
+ATOM     28  C28 BAX A1500     -29.666  -8.145  -5.194  0.00  0.00    +0.061 A 
+ATOM     29  C23 BAX A1500     -29.224  -7.720  -3.938  0.00  0.00    +0.149 A 
+ATOM     30  N26 BAX A1500     -28.713 -10.318  -4.773  0.00  0.00    -0.239 NA
+BRANCH  27  33
+ATOM     31  N30 BAX A1500     -29.037  -9.751  -8.008  0.00  0.00    -0.198 N 
+ATOM     32  C31 BAX A1500     -29.460 -10.152  -9.344  0.00  0.00    +0.139 C 
+ATOM     33  C29 BAX A1500     -29.881  -9.894  -6.923  0.00  0.00    +0.283 C 
+ATOM     34  O32 BAX A1500     -31.023 -10.342  -7.030  0.00  0.00    -0.267 OA
+ATOM     35  H   BAX A1500     -28.137  -9.374  -7.877  0.00  0.00    +0.000 HD
+ENDBRANCH  27  33
+ENDBRANCH  24  29
+ENDBRANCH   4  24
+TORSDOF 6
+ENDMDL

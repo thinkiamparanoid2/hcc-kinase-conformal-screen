@@ -1,0 +1,20 @@
+[
+  {
+    "target": "EGFR",
+    "XGB_minus_kNN_R2_mean": 0.0246763136340586,
+    "XGB_wins": 8,
+    "n_seeds": 10
+  },
+  {
+    "target": "FGFR4",
+    "XGB_minus_kNN_R2_mean": 0.036280150865580604,
+    "XGB_wins": 9,
+    "n_seeds": 10
+  },
+  {
+    "target": "VEGFR2",
+    "XGB_minus_kNN_R2_mean": 0.034346365348319655,
+    "XGB_wins": 9,
+    "n_seeds": 10
+  }
+]
