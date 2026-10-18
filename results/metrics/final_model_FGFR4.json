@@ -1,123 +1,240 @@
 {
   "target": "FGFR4",
-  "n_train": 2546,
-  "n_cal": 559,
-  "n_test": 577,
+  "model": "RF-ecfp",
+  "n_train": 2459,
+  "n_cal": 608,
+  "n_test": 541,
   "alpha": 0.1,
   "edges": [
     0.0,
-    0.4,
-    0.5,
-    0.6,
     0.7,
     1.0001
   ],
   "bin_table": [
     {
       "sim_lo": 0.0,
-      "sim_hi": 0.4,
-      "n_test": 38,
-      "half_width_90": 1.5673207991463798,
-      "test_MAE": 0.8702951846206397,
-      "test_coverage": 0.868421052631579
-    },
-    {
-      "sim_lo": 0.4,
-      "sim_hi": 0.5,
-      "n_test": 35,
-      "half_width_90": 1.8635972162572383,
-      "test_MAE": 1.049414894648961,
-      "test_coverage": 0.8571428571428571
-    },
-    {
-      "sim_lo": 0.5,
-      "sim_hi": 0.6,
-      "n_test": 58,
-      "half_width_90": 1.3308000817018395,
-      "test_MAE": 0.8299280213761605,
-      "test_coverage": 0.896551724137931
-    },
-    {
-      "sim_lo": 0.6,
       "sim_hi": 0.7,
-      "n_test": 145,
-      "half_width_90": 1.3788241841334,
-      "test_MAE": 0.6696488091041302,
-      "test_coverage": 0.8896551724137931
+      "n_cal": 328,
+      "n_test": 309,
+      "half_width_90": 1.483560849145301,
+      "conformal_level_used": 0.9054878048780488,
+      "test_MAE": 0.8516969905648775,
+      "test_coverage": 0.8220064724919094,
+      "test_coverage_CI95": {
+        "lo": 0.7766990291262136,
+        "hi": 0.8640776699029126,
+        "n_boot": 2000
+      },
+      "half_width_90_isotonic": 1.483560849145301
     },
     {
       "sim_lo": 0.7,
       "sim_hi": 1.0001,
-      "n_test": 301,
-      "half_width_90": 1.036381376088872,
-      "test_MAE": 0.6022493278148561,
-      "test_coverage": 0.8172757475083057
+      "n_cal": 280,
+      "n_test": 232,
+      "half_width_90": 1.2143862524611104,
+      "conformal_level_used": 0.9035714285714286,
+      "test_MAE": 0.5205545286603371,
+      "test_coverage": 0.9439655172413793,
+      "test_coverage_CI95": {
+        "lo": 0.9137931034482759,
+        "hi": 0.9698275862068966,
+        "n_boot": 2000
+      },
+      "half_width_90_isotonic": 1.2143862524611104
     }
   ],
-  "tau": 0.5,
-  "overall_coverage": 0.8492201039861352,
-  "mean_half_width": 1.2371764273437886,
+  "tau": 0.0,
+  "tau_CI95": {
+    "lo": 0.0,
+    "hi": 0.7,
+    "median": 0.0,
+    "n_boot": 400,
+    "frac_no_reliable_domain": 0.0
+  },
+  "tau_sensitivity": [
+    {
+      "tau": 0.0,
+      "delta": -0.1,
+      "frac_test_in_AD": 1.0,
+      "n_test_in_AD": 541,
+      "R2_in_AD": 0.42898700782552346,
+      "coverage_in_AD": 0.8743068391866913
+    },
+    {
+      "tau": 0.0,
+      "delta": -0.05,
+      "frac_test_in_AD": 1.0,
+      "n_test_in_AD": 541,
+      "R2_in_AD": 0.42898700782552346,
+      "coverage_in_AD": 0.8743068391866913
+    },
+    {
+      "tau": 0.0,
+      "delta": 0.0,
+      "frac_test_in_AD": 1.0,
+      "n_test_in_AD": 541,
+      "R2_in_AD": 0.42898700782552346,
+      "coverage_in_AD": 0.8743068391866913
+    },
+    {
+      "tau": 0.05,
+      "delta": 0.05,
+      "frac_test_in_AD": 1.0,
+      "n_test_in_AD": 541,
+      "R2_in_AD": 0.42898700782552346,
+      "coverage_in_AD": 0.8743068391866913
+    },
+    {
+      "tau": 0.1,
+      "delta": 0.1,
+      "frac_test_in_AD": 1.0,
+      "n_test_in_AD": 541,
+      "R2_in_AD": 0.42898700782552346,
+      "coverage_in_AD": 0.8743068391866913
+    }
+  ],
+  "tau_is_binding": false,
+  "tau_by_budget": [
+    {
+      "max_half_width": 1.0,
+      "tau": null,
+      "binding": null
+    },
+    {
+      "max_half_width": 1.25,
+      "tau": 0.7,
+      "binding": true
+    },
+    {
+      "max_half_width": 1.5,
+      "tau": 0.0,
+      "binding": false
+    },
+    {
+      "max_half_width": 1.65,
+      "tau": 0.0,
+      "binding": false
+    },
+    {
+      "max_half_width": 2.0,
+      "tau": 0.0,
+      "binding": false
+    }
+  ],
+  "tau_interpretation": "tau sits at the lowest similarity bin: at a 1.65 pIC50 width budget every calibration bin qualifies, so the applicability domain excludes nothing and the gate is vacuous for this target. With this calibration set, bins wide enough for a stable 90% quantile are too wide to resolve a threshold. See tau_by_budget for what a tighter budget would give.",
+  "max_half_width_budget": 1.65,
+  "min_cal_per_bin": 150,
+  "overall_coverage": 0.8743068391866913,
+  "mean_half_width": 1.3681292291254632,
+  "conformal_validity": {
+    "nominal_coverage": 0.9,
+    "empirical_coverage_held_out_chembl": 0.8743068391866913,
+    "empirical_coverage_CI95": {
+      "lo": 0.8465341959334565,
+      "hi": 0.9002310536044359,
+      "n_boot": 2000
+    },
+    "holds_for": "held-out ChEMBL scaffolds, which are exchangeable with the calibration set",
+    "does_not_hold_for": "natural-product libraries screened in step 05: the covariate shift between synthetic calibration chemistry and natural products breaks exchangeability, so intervals attached to library compounds are uncalibrated extrapolations and must be described as such wherever they are reported"
+  },
   "test_all": {
-    "n": 577,
-    "R2": 0.46934238617881363,
-    "RMSE": 0.8778671124913551,
-    "MAE": 0.6868504134497154,
-    "Spearman": 0.6648782028569408,
-    "Pearson": 0.6891203230022281,
-    "prevalence": 0.8232235701906413,
-    "AUC": 0.8493808049535604,
-    "PR_AUC": 0.9576762423413219,
-    "MCC": 0.45035975479081836
+    "n": 541,
+    "R2": 0.42898700782552346,
+    "RMSE": 0.9326982678072497,
+    "MAE": 0.709691350709326,
+    "Spearman": 0.6583490283618093,
+    "Pearson": 0.6681873312168113,
+    "prevalence": 0.7504621072088724,
+    "AUC": 0.8493523079729977,
+    "PR_AUC": 0.933473179889148,
+    "MCC": 0.42094487071317616,
+    "R2_CI95": {
+      "lo": 0.3568206355376749,
+      "hi": 0.4939023772388554,
+      "n_boot": 2000
+    }
   },
   "test_in_AD": {
-    "n": 504,
-    "R2": 0.5203303345876645,
-    "RMSE": 0.8336916674841517,
-    "MAE": 0.647841171095611,
-    "Spearman": 0.7043794280561982,
-    "Pearson": 0.7279545173989725,
-    "prevalence": 0.8313492063492064,
-    "AUC": 0.8754317001263513,
-    "PR_AUC": 0.9658406678449587,
-    "MCC": 0.4907740707740709
+    "n": 541,
+    "R2": 0.42898700782552346,
+    "RMSE": 0.9326982678072497,
+    "MAE": 0.709691350709326,
+    "Spearman": 0.6583490283618093,
+    "Pearson": 0.6681873312168113,
+    "prevalence": 0.7504621072088724,
+    "AUC": 0.8493523079729977,
+    "PR_AUC": 0.933473179889148,
+    "MCC": 0.42094487071317616,
+    "R2_CI95": {
+      "lo": 0.3568206355376749,
+      "hi": 0.4939023772388554,
+      "n_boot": 2000
+    }
   },
   "test_out_AD": {
-    "n": 73,
-    "R2": 0.004179126016070289,
-    "RMSE": 1.1369532078473104,
-    "MAE": 0.9561744976479167,
-    "Spearman": 0.2080594905393294,
-    "Pearson": 0.28155022643402455,
-    "prevalence": 0.7671232876712328,
-    "AUC": 0.6207983193277311,
-    "PR_AUC": 0.8573808743612606,
-    "MCC": 0.22171978681557994
+    "n": 0,
+    "note": "fewer than 20 molecules: no metric is reported because the confidence interval would span most of the plausible range"
   },
   "test_NP_like": {
-    "n": 30,
-    "R2": 0.07130986039538911,
-    "RMSE": 0.9580066705119683,
-    "MAE": 0.7572714555528429,
-    "Spearman": 0.39826366851580547,
-    "Pearson": 0.3505976394395248,
-    "prevalence": 0.6,
-    "AUC": 0.6574074074074074,
-    "PR_AUC": 0.7960214860410596,
-    "MCC": 0.08006407690254358
+    "n": 20,
+    "R2": 0.02901234738071401,
+    "RMSE": 0.870700318947099,
+    "MAE": 0.7348616835283011,
+    "Spearman": 0.27077850730250447,
+    "Pearson": 0.3723143036014498,
+    "prevalence": 0.45,
+    "AUC": 0.6969696969696969,
+    "PR_AUC": 0.7795603089720737,
+    "MCC": -0.050251890762960605,
+    "R2_CI95": {
+      "lo": -0.8051565646960039,
+      "hi": 0.4510564616561251,
+      "n_boot": 2000
+    }
   },
   "test_not_NP_like": {
-    "n": 547,
-    "R2": 0.46691863110206533,
-    "RMSE": 0.8732591787805836,
-    "MAE": 0.6829881990747725,
-    "Spearman": 0.6552290075961972,
-    "Pearson": 0.6885428474143093,
-    "prevalence": 0.8354661791590493,
-    "AUC": 0.8532336494043278,
-    "PR_AUC": 0.9611584733076348,
-    "MCC": 0.48237870713943687
+    "n": 521,
+    "R2": 0.43084375878236336,
+    "RMSE": 0.9349962965907617,
+    "MAE": 0.7087251191231848,
+    "Spearman": 0.6530113583908026,
+    "Pearson": 0.6690768141891061,
+    "prevalence": 0.761996161228407,
+    "AUC": 0.8459819614853336,
+    "PR_AUC": 0.9350598635966512,
+    "MCC": 0.44618821417388954,
+    "R2_CI95": {
+      "lo": 0.35888140022678405,
+      "hi": 0.49761712078457393,
+      "n_boot": 2000
+    }
   },
-  "frac_test_in_AD": 0.8734835355285961,
-  "test_maxsim_median": 0.7058823529411765,
-  "np_score_error_spearman": -0.023688756614212037
+  "np_transfer": {
+    "n_cal_NP_like": 14,
+    "n_test_NP_like": 20,
+    "cutoff": 0.0,
+    "coverage_on_NP_like_test": 0.95,
+    "coverage_on_NP_like_test_CI95": {
+      "lo": 0.85,
+      "hi": 1.0,
+      "n_boot": 2000
+    },
+    "coverage_on_non_NP_like_test": 0.8714011516314779,
+    "coverage_on_non_NP_like_test_CI95": {
+      "lo": 0.8426103646833013,
+      "hi": 0.8983205374280228,
+      "n_boot": 2000
+    },
+    "np_specific_half_width_90": null,
+    "status": "insufficient NP-like calibration molecules (14 < 60): no NP-specific conformal stratum can be fitted from ChEMBL alone. Intervals transferred to a natural-product library therefore carry NO coverage guarantee, only an extrapolation of the synthetic-chemistry error model."
+  },
+  "domain_shift_diagnostics": {
+    "np_score_vs_abs_error_spearman": 0.04687551955089621,
+    "median_np_score_train": -1.2007349943790102,
+    "median_np_score_test": -1.2817248461783926,
+    "median_max_sim_test": 0.6710526315789473
+  },
+  "frac_test_in_AD": 1.0,
+  "test_active_prevalence": 0.7504621072088724
 }

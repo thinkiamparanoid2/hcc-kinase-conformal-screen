@@ -343,6 +343,21 @@ def screen_section():
         return missing("3. Full-library screen",
                        "python scripts/05_screen_coconut_library.py")
     s = C.load_json(path)
+    # A summary written by the pre-rewrite step 05 has different keys, different
+    # taus and a different model, and its counts were computed without
+    # stereoisomer deduplication or scaffold-level novelty. Presenting it beside
+    # the current calibration would state numbers the current pipeline never
+    # produced, so it is refused rather than rendered.
+    if "library_records" not in s or "interval_caveat" not in s:
+        return ("## 3. Full-library natural-product screen\n\n"
+                "_The screen outputs in this repository predate the current "
+                "pipeline: they were produced with a different model family, "
+                "different applicability-domain thresholds, and without "
+                "stereoisomer deduplication or scaffold-level novelty. They are "
+                "withheld here rather than reported beside the current "
+                "calibration. Regenerate with:_ "
+                "`python scripts/05_screen_coconut_library.py` "
+                "_(needs the COCONUT library; see `data/README.md`)._\n")
     lines = ["## 3. Full-library natural-product screen\n",
              f"Library: {s.get('library_records', 0):,} records collapsed to "
              f"{s.get('library_unique_parents', 0):,} unique 2D parents "
@@ -411,6 +426,19 @@ def docking_section():
         return missing("4. Structure-based docking validation",
                        "python scripts/06_docking_validation.py")
     dv = C.load_json(dock_json)
+    # Same reasoning as the screen section: a pre-rewrite docking run reports
+    # best-of-N RMSD as its control, 12-vs-12 enrichment, and cross-receptor
+    # kcal/mol comparisons. Those are the numbers this work set out to stop
+    # quoting, so they are not rendered as current results.
+    if "settings" not in dv or "score_comparability_note" not in dv:
+        return ("## 4. Orthogonal structure-based validation (AutoDock Vina)\n\n"
+                "_The docking outputs in this repository predate the current "
+                "validation protocol: they report best-of-N rather than top-1 "
+                "RMSD without symmetry correction, a 12-vs-12 enrichment control "
+                "drawn from potency extremes, and cross-receptor score "
+                "comparisons. They are withheld here. Regenerate with:_ "
+                "`python scripts/06_docking_validation.py` "
+                "_(needs `vina` and `obabel`; see `docs/REPRODUCE.md`)._\n")
     df = pd.read_csv(dock_csv)
     settings = dv.get("settings", {})
 
@@ -547,7 +575,7 @@ def limitations_section():
         v = r.get("conformal_validity", {})
         items.append(
             f"Conformal coverage is guaranteed only for {v.get('holds_for', '')}. "
-            f"{v.get('does_not_hold_for', '')}")
+            f"It does not hold for {v.get('does_not_hold_for', '')}")
         npt = r.get("np_transfer", {})
         if npt.get("np_specific_half_width_90") is None:
             items.append(npt.get("status", ""))
@@ -570,6 +598,13 @@ def limitations_section():
                 f"calibrated-reliable subset.")
 
     s = C.load_json(os.path.join(C.METRICS_DIR, "screen_summary.json"))
+    if s and "interval_caveat" not in s:
+        items.append(
+            "The library screen and docking validation in this repository predate "
+            "the current pipeline and are withheld from this report; sections 3 "
+            "and 4 name the commands that regenerate them. No screening or "
+            "docking claim in this document is current.")
+        s = None
     if s:
         cons = s.get("consensus", {})
         if cons.get("consensus_caveat"):
@@ -585,6 +620,8 @@ def limitations_section():
                 break
 
     dv = C.load_json(os.path.join(C.METRICS_DIR, "docking_validation.json"))
+    if dv and "score_comparability_note" not in dv:
+        dv = None
     if dv:
         fails = [t for t, rc in (dv.get("redocking_control") or {}).items()
                  if rc.get("pose_prediction_success_top1") is False]
