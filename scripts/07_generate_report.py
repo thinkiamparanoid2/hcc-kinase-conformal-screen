@@ -422,7 +422,7 @@ def screen_section():
 def docking_section():
     dock_json = os.path.join(C.METRICS_DIR, "docking_validation.json")
     dock_csv = os.path.join("results", "predictions", "consensus_hits_docked.csv")
-    if not (os.path.exists(dock_json) and os.path.exists(dock_csv)):
+    if not os.path.exists(dock_json):
         return missing("4. Structure-based docking validation",
                        "python scripts/06_docking_validation.py")
     dv = C.load_json(dock_json)
@@ -439,11 +439,17 @@ def docking_section():
                 "comparisons. They are withheld here. Regenerate with:_ "
                 "`python scripts/06_docking_validation.py` "
                 "_(needs `vina` and `obabel`; see `docs/REPRODUCE.md`)._\n")
-    df = pd.read_csv(dock_csv)
     settings = dv.get("settings", {})
 
-    lines = [
-        "## 4. Orthogonal structure-based validation (AutoDock Vina)\n",
+    lines = ["## 4. Orthogonal structure-based validation (AutoDock Vina)\n"]
+    if settings.get("protocol_note"):
+        lines.append(f"> **{settings['protocol_note']}**\n")
+    versions = settings.get("tool_versions") or {}
+    if versions:
+        lines.append("_Produced by " + ", ".join(
+            f"{k.replace('_', ' ')} {v}" for k, v in sorted(versions.items())) +
+            f", {settings.get('vina_cpu_threads')} threads per docking._\n")
+    lines += [
         f"Boxes are centred on the co-crystal ligand heavy-atom centroid in chain A "
         f"and sized to the ligand (minimum {settings.get('min_box_A')} A, "
         f"{settings.get('box_padding_A')} A padding), pH 7.4 protonation, Gasteiger "
@@ -518,6 +524,19 @@ def docking_section():
         if sampling:
             lines.append(f"_Sampling: {sampling}._\n")
 
+    cand_status = (dv.get("candidates_summary") or {}).get("status", "ok")
+    if cand_status != "ok" or not os.path.exists(dock_csv):
+        lines.append("### 4.3 Candidate docking\n")
+        lines.append(
+            "_Not available. The two controls above stand on their own: they need "
+            "only the co-crystal structures and the curated training sets. Docking "
+            "the candidate shortlist needs a current full-library screen, and there "
+            "is none in this repository._\n")
+        if cand_status != "ok":
+            lines.append(f"_Reason: {cand_status}_\n")
+        return "\n".join(lines)
+
+    df = pd.read_csv(dock_csv)
     lines.append("### 4.3 Candidate docking by chemotype\n")
     chemo_cols = [c for c in df.columns if c.startswith("chemotype_")] or \
                  [c for c in C.CHEMOTYPE_SMARTS if c in df.columns]
