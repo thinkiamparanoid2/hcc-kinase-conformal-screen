@@ -1,13 +1,12 @@
 {
   "target": "EGFR",
-  "n_train": 6734,
-  "n_cal": 1485,
-  "n_test": 1625,
+  "model": "RF-ecfp",
+  "n_train": 6818,
+  "n_cal": 1498,
+  "n_test": 1466,
   "alpha": 0.1,
   "edges": [
     0.0,
-    0.3,
-    0.4,
     0.5,
     0.6,
     0.7,
@@ -16,117 +15,273 @@
   "bin_table": [
     {
       "sim_lo": 0.0,
-      "sim_hi": 0.3,
-      "n_test": 24,
-      "half_width_90": 1.7434280823824702,
-      "test_MAE": 1.1156314500172932,
-      "test_coverage": 0.875
-    },
-    {
-      "sim_lo": 0.3,
-      "sim_hi": 0.4,
-      "n_test": 42,
-      "half_width_90": 1.7489121544879407,
-      "test_MAE": 0.9731737648494659,
-      "test_coverage": 0.8333333333333334
-    },
-    {
-      "sim_lo": 0.4,
       "sim_hi": 0.5,
-      "n_test": 109,
-      "half_width_90": 1.3601394546733185,
-      "test_MAE": 0.7736730484485417,
-      "test_coverage": 0.8623853211009175
+      "n_cal": 153,
+      "n_test": 413,
+      "half_width_90": 1.707894510456755,
+      "conformal_level_used": 0.9084967320261438,
+      "test_MAE": 1.017683548327344,
+      "test_coverage": 0.8523002421307506,
+      "test_coverage_CI95": {
+        "lo": 0.8184019370460048,
+        "hi": 0.8861985472154964,
+        "n_boot": 2000
+      },
+      "half_width_90_isotonic": 1.7612918020853903
     },
     {
       "sim_lo": 0.5,
       "sim_hi": 0.6,
-      "n_test": 236,
-      "half_width_90": 2.0332457304973994,
-      "test_MAE": 0.788267909585708,
-      "test_coverage": 0.961864406779661
+      "n_cal": 308,
+      "n_test": 166,
+      "half_width_90": 1.8146890937140254,
+      "conformal_level_used": 0.9058441558441559,
+      "test_MAE": 0.8266631522568453,
+      "test_coverage": 0.9156626506024096,
+      "test_coverage_CI95": {
+        "lo": 0.8674698795180723,
+        "hi": 0.9578313253012049,
+        "n_boot": 2000
+      },
+      "half_width_90_isotonic": 1.7612918020853903
     },
     {
       "sim_lo": 0.6,
       "sim_hi": 0.7,
-      "n_test": 430,
-      "half_width_90": 1.6265643247167911,
-      "test_MAE": 0.71566547685921,
-      "test_coverage": 0.9232558139534883
+      "n_cal": 460,
+      "n_test": 210,
+      "half_width_90": 1.6559184250447279,
+      "conformal_level_used": 0.9021739130434783,
+      "test_MAE": 0.7393894081112785,
+      "test_coverage": 0.919047619047619,
+      "test_coverage_CI95": {
+        "lo": 0.8809523809523809,
+        "hi": 0.9571428571428572,
+        "n_boot": 2000
+      },
+      "half_width_90_isotonic": 1.6559184250447279
     },
     {
       "sim_lo": 0.7,
       "sim_hi": 1.0001,
-      "n_test": 784,
-      "half_width_90": 1.1645870077082539,
-      "test_MAE": 0.5171220890853179,
-      "test_coverage": 0.9145408163265306
+      "n_cal": 577,
+      "n_test": 677,
+      "half_width_90": 1.2727399988361439,
+      "conformal_level_used": 0.902946273830156,
+      "test_MAE": 0.5516861212357053,
+      "test_coverage": 0.9010339734121122,
+      "test_coverage_CI95": {
+        "lo": 0.8759231905465288,
+        "hi": 0.9231905465288035,
+        "n_boot": 2000
+      },
+      "half_width_90_isotonic": 1.2727399988361439
     }
   ],
-  "tau": 0.6,
-  "overall_coverage": 0.9175384615384615,
-  "mean_half_width": 1.4497579391347337,
+  "tau": 0.7,
+  "tau_CI95": {
+    "lo": 0.6,
+    "hi": 0.7,
+    "median": 0.7,
+    "n_boot": 400,
+    "frac_no_reliable_domain": 0.0
+  },
+  "tau_sensitivity": [
+    {
+      "tau": 0.6,
+      "delta": -0.1,
+      "frac_test_in_AD": 0.6050477489768077,
+      "n_test_in_AD": 887,
+      "R2_in_AD": 0.6041587038204879,
+      "coverage_in_AD": 0.9052987598647125
+    },
+    {
+      "tau": 0.65,
+      "delta": -0.05,
+      "frac_test_in_AD": 0.5450204638472033,
+      "n_test_in_AD": 799,
+      "R2_in_AD": 0.6249059822449813,
+      "coverage_in_AD": 0.904881101376721
+    },
+    {
+      "tau": 0.7,
+      "delta": 0.0,
+      "frac_test_in_AD": 0.4618008185538881,
+      "n_test_in_AD": 677,
+      "R2_in_AD": 0.6393647062876815,
+      "coverage_in_AD": 0.9010339734121122
+    },
+    {
+      "tau": 0.75,
+      "delta": 0.05,
+      "frac_test_in_AD": 0.3567530695770805,
+      "n_test_in_AD": 523,
+      "R2_in_AD": 0.6826516428456089,
+      "coverage_in_AD": 0.9139579349904398
+    },
+    {
+      "tau": 0.8,
+      "delta": 0.1,
+      "frac_test_in_AD": 0.2121418826739427,
+      "n_test_in_AD": 311,
+      "R2_in_AD": 0.724135034017884,
+      "coverage_in_AD": 0.9453376205787781
+    }
+  ],
+  "tau_is_binding": true,
+  "tau_by_budget": [
+    {
+      "max_half_width": 1.0,
+      "tau": null,
+      "binding": null
+    },
+    {
+      "max_half_width": 1.25,
+      "tau": null,
+      "binding": null
+    },
+    {
+      "max_half_width": 1.5,
+      "tau": 0.7,
+      "binding": true
+    },
+    {
+      "max_half_width": 1.65,
+      "tau": 0.7,
+      "binding": true
+    },
+    {
+      "max_half_width": 2.0,
+      "tau": 0.0,
+      "binding": false
+    }
+  ],
+  "tau_interpretation": "tau excludes part of the similarity range; compounds below it fall outside the applicability domain.",
+  "max_half_width_budget": 1.65,
+  "min_cal_per_bin": 150,
+  "overall_coverage": 0.8915416098226466,
+  "mean_half_width": 1.5115870878899254,
+  "conformal_validity": {
+    "nominal_coverage": 0.9,
+    "empirical_coverage_held_out_chembl": 0.8915416098226466,
+    "empirical_coverage_CI95": {
+      "lo": 0.8751705320600273,
+      "hi": 0.9072305593451568,
+      "n_boot": 2000
+    },
+    "holds_for": "held-out ChEMBL scaffolds, which are exchangeable with the calibration set",
+    "does_not_hold_for": "natural-product libraries screened in step 05: the covariate shift between synthetic calibration chemistry and natural products breaks exchangeability, so intervals attached to library compounds are uncalibrated extrapolations and must be described as such wherever they are reported"
+  },
   "test_all": {
-    "n": 1625,
-    "R2": 0.5838792760397281,
-    "RMSE": 0.8397902704417847,
-    "MAE": 0.6468737936981908,
-    "Spearman": 0.7777242824267152,
-    "Pearson": 0.7678706746806043,
-    "prevalence": 0.7630769230769231,
-    "AUC": 0.900005236698785,
-    "PR_AUC": 0.9669784382640265,
-    "MCC": 0.5783555044076408
+    "n": 1466,
+    "R2": 0.4478728522768076,
+    "RMSE": 0.9727059747403276,
+    "MAE": 0.7409909062167602,
+    "Spearman": 0.6840885751361567,
+    "Pearson": 0.6854493155143699,
+    "prevalence": 0.6623465211459755,
+    "AUC": 0.8401398121274538,
+    "PR_AUC": 0.9133935545441437,
+    "MCC": 0.45635387079632495,
+    "R2_CI95": {
+      "lo": 0.3946525734160395,
+      "hi": 0.4929317198638308,
+      "n_boot": 2000
+    }
   },
   "test_in_AD": {
-    "n": 1214,
-    "R2": 0.5902012462082868,
-    "RMSE": 0.766123796196536,
-    "MAE": 0.5874463532885911,
-    "Spearman": 0.768428899953654,
-    "Pearson": 0.776588908592631,
-    "prevalence": 0.8451400329489291,
-    "AUC": 0.9218017709759031,
-    "PR_AUC": 0.9842928834736766,
-    "MCC": 0.5981624933477266
+    "n": 677,
+    "R2": 0.6393647062876815,
+    "RMSE": 0.7378477129702475,
+    "MAE": 0.5516861212357053,
+    "Spearman": 0.8070066063183068,
+    "Pearson": 0.8088252608189569,
+    "prevalence": 0.7872968980797637,
+    "AUC": 0.923988951427976,
+    "PR_AUC": 0.9760718068072998,
+    "MCC": 0.6164875281922214,
+    "R2_CI95": {
+      "lo": 0.576853421315233,
+      "hi": 0.689451534149893,
+      "n_boot": 2000
+    }
   },
   "test_out_AD": {
-    "n": 411,
-    "R2": 0.3035968374182021,
-    "RMSE": 1.0269784953225882,
-    "MAE": 0.8224088609907805,
-    "Spearman": 0.5522731011762185,
-    "Pearson": 0.5692421072059904,
-    "prevalence": 0.5206812652068127,
-    "AUC": 0.7917832914274872,
-    "PR_AUC": 0.8044653801428584,
-    "MCC": 0.461792352238608
+    "n": 789,
+    "R2": 0.206999684271283,
+    "RMSE": 1.1361633593369527,
+    "MAE": 0.9034235290712268,
+    "Spearman": 0.4923460020575768,
+    "Pearson": 0.49975470479594913,
+    "prevalence": 0.5551330798479087,
+    "AUC": 0.7429262771728524,
+    "PR_AUC": 0.7852697092863054,
+    "MCC": 0.33139431321077434,
+    "R2_CI95": {
+      "lo": 0.13042318817219037,
+      "hi": 0.28024947093529423,
+      "n_boot": 2000
+    }
   },
   "test_NP_like": {
-    "n": 20,
-    "R2": -0.2293433578180908,
-    "RMSE": 0.7008323664056121,
-    "MAE": 0.5960015363693237,
-    "Spearman": 0.06769462682562612,
-    "Pearson": 0.23882270610638828,
-    "prevalence": 0.3,
-    "AUC": 0.3333333333333333,
-    "PR_AUC": 0.3790560803718699,
-    "MCC": 0.35043832202523123
+    "n": 54,
+    "R2": 0.07246850574240504,
+    "RMSE": 1.055638146861887,
+    "MAE": 0.6920916046746266,
+    "Spearman": 0.2537165512249616,
+    "Pearson": 0.30142472952115923,
+    "prevalence": 0.25925925925925924,
+    "AUC": 0.6446428571428571,
+    "PR_AUC": 0.47837730824875124,
+    "MCC": 0.3286878675669583,
+    "R2_CI95": {
+      "lo": -0.12939830884518577,
+      "hi": 0.3061427292486164,
+      "n_boot": 2000
+    }
   },
   "test_not_NP_like": {
-    "n": 1605,
-    "R2": 0.5803501028585658,
-    "RMSE": 0.8413770753774831,
-    "MAE": 0.6475077159078964,
-    "Spearman": 0.7746176318790996,
-    "Pearson": 0.765766540201695,
-    "prevalence": 0.7688473520249222,
-    "AUC": 0.900624489421468,
-    "PR_AUC": 0.9679548571999068,
-    "MCC": 0.5723021278477719
+    "n": 1412,
+    "R2": 0.4429977070061413,
+    "RMSE": 0.9693935023283633,
+    "MAE": 0.7428609928196463,
+    "Spearman": 0.6805007247643077,
+    "Pearson": 0.6830202313003114,
+    "prevalence": 0.6777620396600567,
+    "AUC": 0.8365680296714779,
+    "PR_AUC": 0.9163340545201755,
+    "MCC": 0.43480899892979424,
+    "R2_CI95": {
+      "lo": 0.3918874162101887,
+      "hi": 0.49078206438631183,
+      "n_boot": 2000
+    }
   },
-  "frac_test_in_AD": 0.7470769230769231,
-  "test_maxsim_median": 0.6933333333333334,
-  "np_score_error_spearman": 0.038248848945974114
+  "np_transfer": {
+    "n_cal_NP_like": 29,
+    "n_test_NP_like": 54,
+    "cutoff": 0.0,
+    "coverage_on_NP_like_test": 0.9444444444444444,
+    "coverage_on_NP_like_test_CI95": {
+      "lo": 0.8703703703703703,
+      "hi": 1.0,
+      "n_boot": 2000
+    },
+    "coverage_on_non_NP_like_test": 0.8895184135977338,
+    "coverage_on_non_NP_like_test_CI95": {
+      "lo": 0.873229461756374,
+      "hi": 0.9051168555240793,
+      "n_boot": 2000
+    },
+    "np_specific_half_width_90": null,
+    "status": "insufficient NP-like calibration molecules (29 < 60): no NP-specific conformal stratum can be fitted from ChEMBL alone. Intervals transferred to a natural-product library therefore carry NO coverage guarantee, only an extrapolation of the synthetic-chemistry error model."
+  },
+  "domain_shift_diagnostics": {
+    "np_score_vs_abs_error_spearman": 0.007546318877623474,
+    "median_np_score_train": -1.2084547570086237,
+    "median_np_score_test": -1.1881130916097495,
+    "median_max_sim_test": 0.6785714285714286
+  },
+  "frac_test_in_AD": 0.4618008185538881,
+  "test_active_prevalence": 0.6623465211459755
 }
