@@ -1595,9 +1595,9 @@ REMARK                            x       y       z     vdW  Elec       q    Typ
 REMARK                         _______ _______ _______ _____ _____    ______ ____
 ATOM      1  N   UNL     5      28.952   5.339  56.003  0.00  0.00    +0.000 N 
 ATOM      2  H   UNL     5      29.972   5.339  56.003  0.00  0.00    +0.000 HD
-ATOM      3  H   UNL     5      28.612   6.123  56.560  0.00  0.00    +0.000 HD
-ATOM      4  H   UNL     5      28.612   4.465  56.404  0.00  0.00    +0.000 HD
-ATOM      5  H   UNL     5      28.612   5.429  55.046  0.00  0.00    +0.000 HD
+ATOM      3  H   UNL     5      28.612   5.147  55.061  0.00  0.00    +0.000 HD
+ATOM      4  H   UNL     5      28.612   6.251  56.308  0.00  0.00    +0.000 HD
+ATOM      5  H   UNL     5      28.612   4.619  56.640  0.00  0.00    +0.000 HD
 TER 
 REMARK  Name = data/targets/EGFR_clean_receptor.pdb
 REMARK                            x       y       z     vdW  Elec       q    Type
@@ -1620,7 +1620,7 @@ REMARK                            x       y       z     vdW  Elec       q    Typ
 REMARK                         _______ _______ _______ _____ _____    ______ ____
 ATOM      1  O   HOH     8      30.895   7.948  55.395  0.00  0.00    +0.000 OA
 ATOM      2  H   HOH     8      31.865   7.948  55.395  0.00  0.00    +0.000 HD
-ATOM      3  H   HOH     8      30.572   7.485  56.184  0.00  0.00    +0.000 HD
+ATOM      3  H   HOH     8      30.572   7.945  56.310  0.00  0.00    +0.000 HD
 TER 
 REMARK  Name = data/targets/EGFR_clean_receptor.pdb
 REMARK                            x       y       z     vdW  Elec       q    Type
