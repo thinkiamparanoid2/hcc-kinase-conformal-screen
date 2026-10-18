@@ -207,11 +207,23 @@ def benchmark_section():
 def domain_section():
     blocks = {t: C.load_json(os.path.join(C.METRICS_DIR, f"final_model_{t}.json"))
               for t in C.TARGETS}
-    if not any(blocks.values()):
+    blocks = {t: b for t, b in blocks.items() if b}
+    if not blocks:
         return missing("2. Applicability domain and conformal calibration",
                        "python scripts/04_conformal_ad_models.py")
 
-    first = next(b for b in blocks.values() if b)
+    # A metrics file written by an older step 04 lacks the keys below. Report that
+    # and name the command, rather than crashing on a stale artifact: the report
+    # must describe whatever state the repository is actually in.
+    stale = [t for t, b in blocks.items() if "conformal_validity" not in b]
+    blocks = {t: b for t, b in blocks.items() if "conformal_validity" in b}
+    if not blocks:
+        return ("## 2. Applicability domain, conformal calibration and NP transfer\n\n"
+                f"_Metrics for {', '.join(stale)} predate the current calibration "
+                "and carry no validity statement. Regenerate with:_ "
+                "`python scripts/04_conformal_ad_models.py`\n")
+
+    first = next(iter(blocks.values()))
     validity = first.get("conformal_validity", {})
     lines = [
         "## 2. Applicability domain, conformal calibration and NP transfer\n",
@@ -225,11 +237,15 @@ def domain_section():
         f"{validity.get('holds_for', 'held-out scaffolds')}. It does **not** hold "
         f"for {validity.get('does_not_hold_for', 'shifted deployment data')}\n",
     ]
+    if stale:
+        lines.append(f"> Metrics for {', '.join(stale)} predate the current "
+                     f"calibration and are omitted here. Regenerate with "
+                     f"`python scripts/04_conformal_ad_models.py`.\n")
     for t in C.TARGETS:
         r = blocks.get(t)
         if not r:
             continue
-        cov_ci = ci_str(r["conformal_validity"].get("empirical_coverage_CI95"))
+        cov_ci = ci_str(r.get("conformal_validity", {}).get("empirical_coverage_CI95"))
         tau_ci = r.get("tau_CI95", {})
         lines.append(f"### {t} ({r['model']}; train {r['n_train']} / cal {r['n_cal']} "
                      f"/ test {r['n_test']})\n")
@@ -518,7 +534,10 @@ def limitations_section():
                 f"set rather than active-versus-inactive discrimination.")
             break
 
-    r = C.load_json(os.path.join(C.METRICS_DIR, f"final_model_{C.TARGETS[0]}.json"))
+    r = next((b for b in (C.load_json(os.path.join(C.METRICS_DIR,
+                                                   f"final_model_{t}.json"))
+                          for t in C.TARGETS)
+              if b and "conformal_validity" in b), None)
     if r:
         v = r.get("conformal_validity", {})
         items.append(
