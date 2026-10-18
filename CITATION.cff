@@ -2,9 +2,11 @@ cff-version: 1.2.0
 message: "If you use this software or its results, please cite it."
 title: "Domain-calibrated machine learning and structure-based virtual screening of natural products against HCC kinases"
 abstract: >-
-  A reproducible pipeline that quantifies how far a conformal applicability
-  domain calibrated on synthetic kinase inhibitors transfers to natural-product
-  chemical space, with orthogonal structure-based validation.
+  A reproducible pipeline that screens a natural-product library for candidate
+  inhibitors of three hepatocellular carcinoma receptor tyrosine kinases, gating
+  every compound on a conformal applicability domain so that predictions are only
+  claimed where the model is calibrated, with orthogonal structure-based
+  validation.
 authors:
   - family-names: Maharandwa
     given-names: ACP
