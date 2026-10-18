@@ -460,6 +460,44 @@ def bedroc(y_bin, score, alpha=20.0):
     return float((rie - rie_min) / (rie_max - rie_min))
 
 
+def permutation_null(y_bin, score, metric, n_perm=2000, seed=0):
+    """What this metric gives on the same design when the ranking carries no signal.
+
+    EF and BEDROC were built for a large library with a small active fraction.
+    On a balanced control set they do not mean what their usual thresholds
+    suggest: with 50 actives in 99 compounds, a random ranking returns BEDROC
+    (alpha=20) around 0.5 with a 5-95% spread of roughly 0.25 to 0.75, so a
+    BEDROC of 0.72 is inside the noise while reading like strong early
+    recognition. EF at 1% is worse: the top 1% of 99 compounds is one compound,
+    so the statistic has two reachable values.
+
+    Rather than drop the metrics or quote them bare, each is reported against its
+    own null, obtained by shuffling the labels. `exceeds_null` is the honest
+    summary: whether the observed value falls outside the middle 90% of what
+    chance produces on this design.
+    """
+    y_bin = np.asarray(y_bin, int)
+    score = np.asarray(score, float)
+    observed = float(metric(y_bin, score))
+    rng = np.random.default_rng(seed)
+    draws = np.empty(n_perm, float)
+    for i in range(n_perm):
+        draws[i] = metric(rng.permutation(y_bin), score)
+    draws = draws[np.isfinite(draws)]
+    if draws.size == 0 or not np.isfinite(observed):
+        return None
+    lo, hi = (float(np.percentile(draws, 5)), float(np.percentile(draws, 95)))
+    return {
+        "observed": round(observed, 4),
+        "null_mean": round(float(draws.mean()), 4),
+        "null_5pct": round(lo, 4),
+        "null_95pct": round(hi, 4),
+        "p_one_sided": round(float((draws >= observed).mean()), 4),
+        "exceeds_null": bool(observed > hi),
+        "n_perm": int(draws.size),
+    }
+
+
 # ----------------------------------------------------------------------------
 # NP-likeness (Ertl & Schuffenhauer, RDKit Contrib)
 # ----------------------------------------------------------------------------
