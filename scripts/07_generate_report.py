@@ -523,6 +523,18 @@ def docking_section():
                          if isinstance(ec, dict) and ec.get("sampling")), None)
         if sampling:
             lines.append(f"_Sampling: {sampling}._\n")
+        inactive_class = next((ec.get("inactive_class") for ec in
+                               (dv.get("enrichment_control") or {}).values()
+                               if isinstance(ec, dict) and ec.get("inactive_class")), None)
+        if inactive_class:
+            lines.append(
+                f"> **What the negative class is.** {inactive_class}. This matters "
+                "for how the AUC reads: a true inactive is a `>` record, where the "
+                "assay ran and found nothing, whereas a measured weak binder still "
+                "occupies the pocket. Discriminating actives from weak binders is "
+                "the harder task, so an AUC measured this way understates what the "
+                "same control would give against true non-binders, and is not "
+                "comparable to a published enrichment that used decoys.\n")
 
     cand_status = (dv.get("candidates_summary") or {}).get("status", "ok")
     if cand_status != "ok" or not os.path.exists(dock_csv):
