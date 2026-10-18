@@ -1,88 +1,140 @@
-# Domain-Calibrated ML & Structure-Based Virtual Screening of Natural Products Against HCC Kinases (`EGFR`, `FGFR4`, `VEGFR2`)
+# Domain-Calibrated QSAR and Structure-Based Screening of Natural Products Against HCC Kinases
 
-Reproducible end-to-end virtual screening pipeline combining **10-seed generic Murcko-scaffold QSAR**, **Mondrian split-conformal applicability domain (AD) calibration**, **full-library natural product screening (738,827 COCONUT compounds)**, and **orthogonal 3D molecular docking validation (AutoDock Vina 1.2.5)** against three Hepatocellular Carcinoma (HCC) receptor tyrosine kinases: **EGFR** (`1M17`), **FGFR4** (`5JKG`), and **VEGFR2** (`4ASD`).
+How far does a conformal applicability domain, calibrated on synthetic kinase
+inhibitors, transfer to natural-product chemical space?
 
----
+This repository answers that question for three hepatocellular carcinoma receptor
+tyrosine kinases — **EGFR** (`1M17`), **FGFR4** (`5JKG`) and **VEGFR2** (`4ASD`) —
+by combining scaffold-split QSAR, Mondrian split-conformal calibration, a
+full-library COCONUT natural-product screen, and orthogonal AutoDock Vina
+validation.
 
-## Repository Structure
-
-```text
-├── data/
-│   ├── ligands_chembl/          # Curated human binding IC50 datasets (EGFR, FGFR4, VEGFR2)
-│   ├── ligands_phytochemical/   # Full COCONUT natural products library (see data/README.md)
-│   ├── targets/                 # Co-crystal PDB & prepared PDBQT receptors (1M17, 5JKG, 4ASD)
-│   └── features/                # Engineered 21 physchem descriptors + 2,048-bit ECFP4 tables
-├── models/
-│   ├── <TARGET>_xgb_final.json  # Final scaffold-trained XGBoost regressors
-│   └── <TARGET>_conformal.json  # Mondrian split-conformal 90% calibration & AD thresholds (tau)
-├── results/
-│   ├── figures/                 # Publication figures (fig1_benchmark, fig2_domain_shift, fig3_docking)
-│   ├── metrics/                 # Benchmark, conformal calibration, screening & docking JSON/CSV metrics
-│   ├── predictions/             # Consensus hits, PAINS/QED annotations & Vina docked affinities
-│   ├── docking_poses/           # 3D docked PDBQT poses (redocking controls, enrichment, candidates)
-│   └── reports/                 # Auto-generated markdown report (results_report.md)
-├── scripts/
-│   ├── common.py                # Shared Murcko-scaffold split, ECFP4, Tanimoto-kNN, NP-likeness
-│   ├── 01_fetch_chembl_data.py  # Curated ChEMBL IC50 bioactivity downloader
-│   ├── 02_feature_engineering.py# 21 RDKit physicochemical descriptors + 2,048-bit ECFP4
-│   ├── 03_scaffold_benchmark.py # 10-seed Murcko-scaffold benchmark + Y-scramble & kNN controls
-│   ├── 04_conformal_ad_models.py# Mondrian conformal calibration & synthetic->NP domain-shift analysis
-│   ├── 05_screen_coconut_library.py # Parallel streaming screen of 738,827 COCONUT compounds
-│   ├── 06_docking_validation.py # AutoDock Vina 1.2.5 redocking, active enrichment & candidate docking
-│   ├── 07_generate_report.py    # Automated report & figure generator
-│   └── run_pipeline.py          # Master checkpointed pipeline orchestrator (Steps 1–7)
-├── COMMANDBOOK.md               # Quick CLI execution reference
-└── requirements.txt             # Verified Python package versions
-```
+The central result is a measurement, not a candidate list: the conformal guarantee
+established on held-out ChEMBL scaffolds **does not transfer** to natural products,
+because the two populations are not exchangeable. The pipeline quantifies the
+resulting loss of coverage, reports the fraction of a 738k-compound library that is
+admissible under a calibrated applicability domain, and treats the surviving
+compounds as a worked example rather than as a discovery claim.
 
 ---
 
-## Quick Start
+## Results
+
+All numbers live in **[`results/reports/results_report.md`](results/reports/results_report.md)**,
+which is regenerated from `results/metrics/` and `results/predictions/` by step 07.
+Nothing is transcribed into this README, so nothing here can drift away from the
+data. Figures are written to `results/figures/`.
+
+The report covers:
+
+| Section | Content |
+|---|---|
+| 0 | Data curation: censored labels, standardisation, label-noise ceiling |
+| 1 | Scaffold-split benchmark with bootstrap CIs, temporal holdout, model selection |
+| 2 | Conformal calibration, applicability domain, natural-product transfer |
+| 3 | Full-library screen with scaffold-level novelty and a nearest-neighbour baseline |
+| 4 | Redocking (top-1 RMSD), enrichment (AUC with CI, EF, BEDROC), candidate docking |
+| 5 | Limitations, generated from what the pipeline actually measured |
+
+---
+
+## Method, and the assumptions it rests on
+
+**Labels.** Human binding-assay IC50 from ChEMBL. `standard_relation` is preserved:
+`<` / `<=` bound potency from below, `>` / `>=` from above, and only uncensored
+records are used as regression targets. Structures are salt-stripped, neutralised
+and tautomer-canonicalised, then deduplicated on the parent InChIKey.
+
+**Splitting.** Generic Bemis-Murcko scaffold splits, strictly disjoint. A
+deterministic canonical split carries the headline numbers with percentile
+bootstrap CIs; repeated random scaffold splits measure split variance, which is not
+the same thing as generalisation to new chemistry and is labelled as such.
+
+**Model.** The family used downstream is chosen by the benchmark
+(`results/metrics/model_selection.json`), not fixed in advance. Hyperparameters are
+library defaults and were not tuned against any reported split.
+
+**Calibration.** Mondrian split-conformal intervals at 90%, with the taxonomy given
+by max-Tanimoto to the training set. The domain threshold `tau` is read off an
+isotonic fit of half-width against similarity and reported with a bootstrap CI and
+a sensitivity analysis, because a threshold that gates an entire screen should not
+rest on one noisy bin.
+
+> **Validity.** Split-conformal coverage holds under exchangeability. Held-out
+> ChEMBL scaffolds satisfy it; a natural-product library does not. Intervals
+> attached to library compounds in step 05 are therefore an error model calibrated
+> on synthetic chemistry and extrapolated — they are labelled that way in every
+> output file, and `interval_lower_bound_active` is never described as a
+> guaranteed-coverage hit.
+
+**Screening.** The library is deduplicated to 2D parents before screening, since
+the features are achiral. Hits are scored for novelty at the scaffold level, not
+only by similarity, and flagged for pan-kinase frequent-hitter chemotypes. A
+similarity-search baseline ranks the same library, so the model's added value is
+measured rather than assumed.
+
+**Docking.** Top-1 symmetry-corrected RMSD is the redocking control; best-of-N is
+reported beside it as a sampling diagnostic. The enrichment control uses randomly
+sampled, property-matched actives and inactives with bootstrap CIs, EF1%, EF5% and
+BEDROC. Boxes are sized to the ligand, replicate seeds give error bars, and Vina
+scores are compared within a target only.
+
+---
+
+## Quick start
 
 ```bash
 git clone https://github.com/thinkiamparanoid2/hcc-kinase-conformal-screen.git
 cd hcc-kinase-conformal-screen
-pip install -r requirements.txt
 
-# Run full 7-step pipeline (with automatic checkpoint/resume)
-python scripts/run_pipeline.py
+# Conda (includes AutoDock Vina and Open Babel for step 06)
+conda env create -f environment.yml && conda activate hcc-screen
+
+# or: pip install -r requirements.txt   (steps 01-05 and 07 only)
+
+pytest -q                          # 22 unit tests, no external data needed
+python scripts/run_pipeline.py --list
+python scripts/run_pipeline.py     # full pipeline, checkpointed and resumable
+```
+
+Steps that need external inputs are skipped with a named reason rather than
+failing: step 05 needs the COCONUT library (see [`data/README.md`](data/README.md))
+and step 06 needs `vina` and `obabel` on `PATH` (or `VINA_BIN` / `OBABEL_BIN`).
+
+See [`docs/REPRODUCE.md`](docs/REPRODUCE.md) for the full reproduction path and
+[`COMMANDBOOK.md`](COMMANDBOOK.md) for per-step commands.
+
+---
+
+## Repository layout
+
+```text
+├── data/
+│   ├── ligands_chembl/          # Curated IC50 datasets (tracked)
+│   ├── ligands_phytochemical/   # COCONUT library (not tracked; see data/README.md)
+│   ├── targets/                 # Co-crystal PDB and prepared PDBQT receptors
+│   └── features/                # Regenerated by step 02 (not tracked)
+├── models/                      # Final models + conformal calibration per target
+├── results/
+│   ├── figures/  metrics/  predictions/  docking_poses/  reports/
+├── scripts/                     # common.py + steps 01-07 + run_pipeline.py
+├── tests/                       # pytest suite (no network, no docking binaries)
+├── docs/                        # Reproduction guide, limitations register
+├── environment.yml  Dockerfile  requirements.txt
+└── CITATION.cff  LICENSE
 ```
 
 ---
 
-## Key Results Summary
+## Known limitations
 
-### 1. 10-Seed Generic Murcko-Scaffold Benchmark (`scripts/03_scaffold_benchmark.py`)
+Maintained in [`docs/limitations.md`](docs/limitations.md) and regenerated into
+section 5 of the report from the pipeline's own measurements. The load-bearing
+ones: conformal validity does not transfer to natural products; the NP-like
+evaluation subset available from ChEMBL is small; there is no experimental
+validation; and rigid-receptor Vina scores are not binding free energies.
 
-Mean $\pm$ SD across 10 independent 80/20 generic Murcko-scaffold splits (`active` defined as $\text{pIC}_{50} \ge 6.0$):
+## Licence and citation
 
-| Target | $n$ | `XGB-scramble` ($R^2$ / AUC) | `kNN-Tanimoto` ($R^2$) | `RF-ecfp` ($R^2$ / AUC) | `XGB-all` ($R^2$ / AUC) | `XGB-all` vs `kNN` Wilcoxon $p$ |
-|:---|---:|:---:|:---:|:---:|:---:|:---:|
-| **FGFR4** | 3,682 | `-0.187` / `0.502` | `0.499 +/- 0.068` | **`0.544 +/- 0.065`** / `0.903` | `0.535 +/- 0.067` / `0.892` | `0.0039` (9/10 wins) |
-| **EGFR** | 9,844 | `-0.065` / `0.508` | `0.529 +/- 0.056` | **`0.585 +/- 0.052`** / `0.899` | `0.553 +/- 0.053` / `0.889` | `0.0371` (8/10 wins) |
-| **VEGFR2** | 9,247 | `-0.083` / `0.513` | `0.483 +/- 0.036` | **`0.537 +/- 0.032`** / `0.840` | `0.518 +/- 0.030` / `0.831` | `0.0098` (9/10 wins) |
-
-![10-Seed Murcko-Scaffold Benchmark](results/figures/fig1_benchmark.png)
-
-### 2. Mondrian Conformal Calibration & Synthetic $\to$ Natural-Product Domain Shift (`scripts/04_conformal_ad_models.py`)
-
-- **Empirical 90% coverage on held-out scaffold test sets:** `0.849` (FGFR4, $\tau = 0.50$), `0.918` (EGFR, $\tau = 0.60$), `0.921` (VEGFR2, $\tau = 0.60$).
-- **Synthetic $\to$ NP domain shift:** Held-out test $R^2$ drops from `0.467 -> 0.071` (FGFR4), `0.580 -> -0.229` (EGFR), and `0.474 -> -0.107` (VEGFR2) on NP-like test molecules ($\text{NP-likeness} \ge 0$), proving why uncalibrated screening without similarity-binned conformal intervals produces false-positive rankings.
-
-![Mondrian Conformal Calibration and Domain Shift](results/figures/fig2_domain_shift.png)
-
-### 3. Orthogonal 3D Structure-Based Validation (`scripts/06_docking_validation.py`)
-
-- **Control 1 (Co-Crystal Redocking):** Best-of-9 RMSD = **`0.83 Å`** for VEGFR2 (`4ASD` Sorafenib, top-1 = `0.83 Å` at `-12.25 kcal/mol`), **`1.24 Å`** for EGFR (`1M17` Erlotinib), and **`1.81 Å`** for FGFR4 (`5JKG` `6LF`).
-- **Control 2 (ChEMBL Active vs. Inactive Enrichment):** Strong active enrichment in **VEGFR2 (`4ASD`, ROC-AUC = `0.931`, $p = 0.0002$)** and **FGFR4 (`5JKG`, ROC-AUC = `0.826`, $p = 0.0036$)**; no separation by rigid-receptor Vina alone in open-cleft **EGFR (`1M17`, ROC-AUC = `0.521`)**.
-- **Candidate Docking & Conformational Selectivity (`DFG-in` vs. `DFG-out`):**
-  - Rigid hexacyclic **indolocarbazole glycosides** (`K252a-Me`, `O-demethyl-N-demethyl-staurosporine`, `Staurosporine M1`) bind strongly to **DFG-in** FGFR4 (`-9.67` to `-11.70 kcal/mol`) and EGFR (`-10.67` to `-11.66 kcal/mol`), but sterically clash with the **DFG-out (Type-II)** pocket of VEGFR2 `4ASD` (`-0.54` to `-4.90 kcal/mol`).
-  - Flexible macrocyclic **resorcylic acid lactones (RALs)** — **`15-O-desmethyl-(5Z)-7-oxozeaenol` (`CNP0277321.1`, NP-likeness = `2.28`, QED = `0.52`, PAINS = `False`)** and **`CNP0143079.3` (NP-likeness = `2.37`, QED = `0.49`, PAINS = `False`)** — dock favorably across **all three** pockets (`-8.44, -8.93, -7.11 kcal/mol` for `CNP0277321.1`).
-
-![Structure-Based Docking Validation](results/figures/fig3_docking_validation.png)
-
----
-
-## Full Report
-
-See [`results/reports/results_report.md`](results/reports/results_report.md) for the complete auto-generated tables and [`results/predictions/consensus_hits_docked.csv`](results/predictions/consensus_hits_docked.csv) for the docked candidate shortlist.
+MIT — see [`LICENSE`](LICENSE). Citation metadata in [`CITATION.cff`](CITATION.cff).
+Archive a release and add its DOI before submission.
