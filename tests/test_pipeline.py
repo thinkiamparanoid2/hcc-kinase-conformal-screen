@@ -251,3 +251,53 @@ def test_descriptors_match_declared_columns():
 
 def test_resolve_binary_is_not_required_to_exist():
     assert C.resolve_binary("definitely-not-installed-xyz", required=False) is None
+
+
+# ----------------------------------------------------------------------------
+# Report generation against incomplete or stale inputs
+# ----------------------------------------------------------------------------
+
+def _report_module():
+    import importlib.util
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "scripts", "07_generate_report.py")
+    spec = importlib.util.spec_from_file_location("report07", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_report_survives_metrics_written_by_an_older_step_04(tmp_path, monkeypatch):
+    """A stale metrics file must produce a "regenerate this" note, not a crash.
+
+    CI caught this: `final_model_*.json` from before the calibration rewrite has no
+    `conformal_validity` key, and the report generator raised KeyError. The report
+    has to describe whatever state the repository is actually in.
+    """
+    import json
+    mod = _report_module()
+    metrics = tmp_path / "metrics"
+    metrics.mkdir()
+    (metrics / "final_model_FGFR4.json").write_text(json.dumps({
+        "target": "FGFR4", "tau": 0.5, "overall_coverage": 0.85,
+        "bin_table": [], "alpha": 0.1,            # no conformal_validity
+    }))
+    monkeypatch.setattr(C, "METRICS_DIR", str(metrics))
+    monkeypatch.setattr(mod.C, "METRICS_DIR", str(metrics))
+    section = mod.domain_section()
+    assert "04_conformal_ad_models.py" in section
+    assert "FGFR4" in section
+
+
+def test_report_sections_report_missing_inputs_rather_than_failing(tmp_path, monkeypatch):
+    mod = _report_module()
+    empty = tmp_path / "metrics"
+    empty.mkdir()
+    monkeypatch.setattr(C, "METRICS_DIR", str(empty))
+    monkeypatch.setattr(mod.C, "METRICS_DIR", str(empty))
+    monkeypatch.chdir(tmp_path)
+    for section in (mod.curation_section(), mod.benchmark_section(),
+                    mod.domain_section(), mod.screen_section(),
+                    mod.docking_section()):
+        assert "Not run" in section or "Regenerate" in section or "regenerate" in section
+    assert isinstance(mod.limitations_section(), str)

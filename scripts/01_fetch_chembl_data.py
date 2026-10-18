@@ -182,6 +182,10 @@ def curate(target_name, records):
         })
 
     out = pd.DataFrame(rows)
+    if out.empty:
+        raise ValueError(
+            f"{target_name}: no usable records after curation. Check that the "
+            f"input carries standard_value in nM (or pIC50) and parsable SMILES.")
     n_parents = len(out)
 
     noisy = out["censored"].eq(False) & out["replicate_sd"].gt(MAX_REPLICATE_SD)
@@ -231,6 +235,14 @@ def recurate_existing(target_name):
         return None, None
     raw = pd.read_csv(path)
     smi_col = "original_smiles" if "original_smiles" in raw.columns else "canonical_smiles"
+    # A file already written by this script carries pIC50 but not the raw
+    # standard_value it came from. Invert the transform so re-curation is
+    # idempotent instead of silently dropping every row.
+    if "standard_value" not in raw.columns and "pIC50" in raw.columns:
+        raw = raw.copy()
+        raw["standard_value"] = 10 ** (9.0 - pd.to_numeric(raw["pIC50"],
+                                                           errors="coerce"))
+        raw["standard_units"] = "nM"
     records = []
     for _, r in raw.iterrows():
         records.append({
