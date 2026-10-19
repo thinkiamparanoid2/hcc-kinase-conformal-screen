@@ -44,6 +44,7 @@ import os
 import sys
 import json
 import time
+import hashlib
 
 import numpy as np
 import pandas as pd
@@ -94,11 +95,50 @@ def model_view(name, seed):
     return make_models(seed)[name][0]
 
 
+def data_fingerprint(target):
+    """Short digest of the feature table a benchmark row was computed from."""
+    path = os.path.join(C.FEATURES_DIR, f"{target}_training_features.csv")
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()[:16]
+
+
 def done_keys():
+    """Rows already computed, keyed by the data they came from as well as the seed.
+
+    Keying on (target, seed) alone made the checkpoint lie after step 01 or 02
+    changed the data: every seed was reported "already done" and skipped, and
+    summarize() then averaged rows from two different datasets into one
+    model-selection decision. A row with no `data_sha` predates this field and
+    can never match, so it is treated as stale.
+    """
     if not os.path.exists(JSONL):
         return set()
     with open(JSONL) as f:
-        return {(r["target"], r["seed"]) for r in map(json.loads, f)}
+        return {(r["target"], r["seed"], r.get("data_sha")) for r in map(json.loads, f)}
+
+
+def prune_stale(fingerprints):
+    """Drop rows whose feature table has changed, and return how many went.
+
+    summarize() averages whatever the file holds, so stale rows have to leave the
+    file rather than merely be re-run alongside.
+    """
+    if not os.path.exists(JSONL):
+        return 0
+    with open(JSONL) as f:
+        rows = [json.loads(l) for l in f]
+    keep = [r for r in rows
+            if r["target"] not in fingerprints
+            or r.get("data_sha") == fingerprints[r["target"]]]
+    if len(keep) == len(rows):
+        return 0
+    with open(JSONL, "w") as f:
+        for r in keep:
+            f.write(json.dumps(r) + "\n")
+    return len(rows) - len(keep)
 
 
 def _fit_predict(name, seed, X_all, col_idx, tr, te, y_tr):
@@ -287,6 +327,11 @@ def main(targets=None, seeds=None):
     os.makedirs(C.METRICS_DIR, exist_ok=True)
     targets = targets or C.TARGETS
     seeds = C.SEEDS if seeds is None else seeds
+    fingerprints = {t: data_fingerprint(t) for t in targets}
+    dropped = prune_stale(fingerprints)
+    if dropped:
+        print(f"[!] dropped {dropped} benchmark rows computed from a feature table "
+              f"that has since changed; those seeds will be re-run", flush=True)
     finished = done_keys()
     canonical, temporal = {}, {}
 
@@ -304,7 +349,7 @@ def main(targets=None, seeds=None):
         col_idx = _col_index(cols, fp_cols, desc_cols)
 
         for s in seeds:
-            if (t, s) in finished:
+            if (t, s, fingerprints[t]) in finished:
                 print(f"  seed {s}: already done, skipping")
                 continue
             print(f"  seed {s}:", flush=True)
@@ -312,6 +357,7 @@ def main(targets=None, seeds=None):
             rows = evaluate_split(t, s, tr, te, y, fps, X_all, col_idx, "repeated")
             with open(JSONL, "a") as f:
                 for r in rows:
+                    r["data_sha"] = fingerprints[t]
                     f.write(json.dumps(r) + "\n")
 
         print(f"  canonical deterministic scaffold split:", flush=True)

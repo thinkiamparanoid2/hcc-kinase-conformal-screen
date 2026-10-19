@@ -449,3 +449,41 @@ def test_permutation_null_flags_a_ranking_that_really_separates():
     assert null["observed"] == pytest.approx(1.0)
     assert null["exceeds_null"]
     assert null["p_one_sided"] < 0.01
+
+
+# ----------------------------------------------------------------------------
+# Benchmark checkpoint
+# ----------------------------------------------------------------------------
+
+def _benchmark_module():
+    import importlib.util
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "scripts", "03_scaffold_benchmark.py")
+    spec = importlib.util.spec_from_file_location("benchmark03", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_benchmark_checkpoint_discards_rows_from_changed_data(tmp_path, monkeypatch):
+    """A seed is only "done" for the data it was computed from.
+
+    Keying the checkpoint on (target, seed) alone meant that re-running after
+    step 01 or 02 changed the data skipped every seed as already done, and the
+    summary then averaged rows from two datasets into one model selection.
+    """
+    import json as _json
+
+    mod = _benchmark_module()
+    jsonl = tmp_path / "benchmark_long.jsonl"
+    monkeypatch.setattr(mod, "JSONL", str(jsonl))
+
+    rows = [{"target": "EGFR", "seed": 0, "model": "RF-ecfp", "data_sha": "old"},
+            {"target": "EGFR", "seed": 1, "model": "RF-ecfp", "data_sha": "new"},
+            {"target": "FGFR4", "seed": 0, "model": "RF-ecfp"}]  # predates the field
+    jsonl.write_text("".join(_json.dumps(r) + "\n" for r in rows))
+
+    assert mod.prune_stale({"EGFR": "new", "FGFR4": "new"}) == 2
+    kept = [_json.loads(l) for l in jsonl.read_text().splitlines()]
+    assert kept == [rows[1]]
+    assert mod.done_keys() == {("EGFR", 1, "new")}
