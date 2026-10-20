@@ -177,11 +177,18 @@ def _mol_from_pdbqt_model(pdbqt_path, model_index, obabel):
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     mol = None
     if res.returncode == 0 and os.path.exists(out_sdf):
-        supplier = Chem.SDMolSupplier(out_sdf, sanitize=False, removeHs=True)
-        mols = [m for m in supplier if m is not None]
+        # The supplier holds the file open, and Windows refuses to delete a file
+        # with a live handle, so it is closed before the scratch SDF is removed.
+        with Chem.SDMolSupplier(out_sdf, sanitize=False, removeHs=True) as supplier:
+            mols = [m for m in supplier if m is not None]
         mol = mols[0] if mols else None
     if os.path.exists(out_sdf):
-        os.remove(out_sdf)
+        try:
+            os.remove(out_sdf)
+        except OSError:
+            # A scratch file under the gitignored pose directory. Failing to
+            # delete it is not worth losing a multi-hour docking run over.
+            pass
     return mol
 
 
@@ -640,7 +647,16 @@ def dock_consensus_candidates(n_novel=25, n_control=8, exhaustiveness=EXHAUSTIVE
     # Docking it would attach current poses and current scores to a candidate
     # list the current screen would not produce, which is the same staleness the
     # report refuses to render, only harder to notice.
-    required = {"interval_lower_bound_active", "known_scaffold", "pan_kinase_alert"}
+    # These are the column names step 05 actually writes, which is what makes a
+    # file post-rewrite: the renamed hit rule, scaffold-level novelty, and the
+    # pan-kinase flag. The guard previously named `interval_lower_bound_active`
+    # and `known_scaffold` -- the keys of screen_summary.json and of an
+    # intermediate frame inside step 05, neither of which ever reaches this CSV.
+    # So it rejected every current screen and candidate docking could not run at
+    # all. A pre-rewrite file (`confident_active`, no scaffold novelty) is still
+    # rejected, which is the check's purpose.
+    required = {"n_targets_interval_active", "known_scaffold_all_targets",
+                "pan_kinase_alert"}
     stale = required - set(ann.columns)
     if stale:
         raise StaleScreenOutput(

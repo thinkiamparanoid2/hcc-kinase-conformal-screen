@@ -1,0 +1,87 @@
+{
+  "library_records": 738827,
+  "library_unique_parents": 690177,
+  "library_unparsable": 8,
+  "dedup_note": "Collapsed on standardised parent InChIKey. 2D descriptors and ECFP4 are achiral, so stereoisomer records produce identical predictions and must not be counted as distinct screened compounds.",
+  "library_featurised": 690177,
+  "targets": {
+    "FGFR4": {
+      "model": "RF-ecfp",
+      "tau": 0.0,
+      "tau_is_binding": false,
+      "in_AD_caveat": "tau is non-binding for this target (step 04 found every calibration bin inside the width budget), so `in_AD` admits the whole library and the in-domain counts below are not a calibrated-reliable subset.",
+      "in_AD": 690177,
+      "in_AD_frac": 1.0,
+      "median_sim_train": 0.1818181872367859,
+      "in_AD_active": 643633,
+      "in_AD_active_novel_scaffold": 604014,
+      "in_AD_active_pan_kinase_alert": 90889,
+      "interval_lower_bound_active": 3220,
+      "interval_lower_bound_active_novel_scaffold": 2977,
+      "rediscovery_total": 276,
+      "known_scaffold_total": 48475,
+      "spearman_model_vs_nn_baseline_in_AD": 0.23942345655905942
+    },
+    "EGFR": {
+      "model": "RF-ecfp",
+      "tau": 0.0,
+      "tau_is_binding": false,
+      "in_AD_caveat": "tau is non-binding for this target (step 04 found every calibration bin inside the width budget), so `in_AD` admits the whole library and the in-domain counts below are not a calibrated-reliable subset.",
+      "in_AD": 690177,
+      "in_AD_frac": 1.0,
+      "median_sim_train": 0.21739129722118378,
+      "in_AD_active": 123659,
+      "in_AD_active_novel_scaffold": 116267,
+      "in_AD_active_pan_kinase_alert": 21087,
+      "interval_lower_bound_active": 34,
+      "interval_lower_bound_active_novel_scaffold": 1,
+      "rediscovery_total": 226,
+      "known_scaffold_total": 89541,
+      "spearman_model_vs_nn_baseline_in_AD": 0.31700691043432877
+    },
+    "VEGFR2": {
+      "model": "RF-ecfp",
+      "tau": 0.5,
+      "tau_is_binding": true,
+      "in_AD_caveat": null,
+      "in_AD": 2078,
+      "in_AD_frac": 0.003010821861638391,
+      "median_sim_train": 0.20567375421524048,
+      "in_AD_active": 977,
+      "in_AD_active_novel_scaffold": 553,
+      "in_AD_active_pan_kinase_alert": 309,
+      "interval_lower_bound_active": 111,
+      "interval_lower_bound_active_novel_scaffold": 7,
+      "rediscovery_total": 151,
+      "known_scaffold_total": 61097,
+      "spearman_model_vs_nn_baseline_in_AD": 0.7213021686700746
+    }
+  },
+  "consensus": {
+    "any_target_inAD_active": 645850,
+    "two_or_more_targets_inAD_active": 122205,
+    "all_three_inAD_active": 214,
+    "any_target_interval_active": 3271,
+    "novel_scaffold_and_not_rediscovery": 616486,
+    "pan_kinase_alert_among_hits": 91439,
+    "cross_target_prediction_spearman": {
+      "FGFR4_vs_EGFR": 0.36291745271731835,
+      "FGFR4_vs_VEGFR2": 0.163666252688509,
+      "EGFR_vs_VEGFR2": 0.1803433117616285
+    },
+    "consensus_caveat": "The three targets are ATP-site kinases trained on overlapping chemotypes, so their predictions are correlated (see cross_target_prediction_spearman). Agreement across targets indicates pan-kinase chemistry, which is a selectivity liability, and is not independent confirmation of activity."
+  },
+  "conformal_validity": {
+    "nominal_coverage": 0.9,
+    "empirical_coverage_held_out_chembl": 0.8706099815157117,
+    "empirical_coverage_CI95": {
+      "lo": 0.8410351201478743,
+      "hi": 0.9001848428835489,
+      "n_boot": 2000
+    },
+    "holds_for": "held-out ChEMBL scaffolds, which are exchangeable with the calibration set",
+    "does_not_hold_for": "natural-product libraries screened in step 05: the covariate shift between synthetic calibration chemistry and natural products breaks exchangeability, so intervals attached to library compounds are uncalibrated extrapolations and must be described as such wherever they are reported"
+  },
+  "interval_caveat": "`interval_lo`/`interval_hi` are the step-04 Mondrian half-widths applied by similarity bin. Their 90% coverage was established on held-out ChEMBL scaffolds, which are NOT exchangeable with this natural-product library. Treat them as a calibrated-on-synthetic-chemistry error model extrapolated to natural products, never as guaranteed 90% intervals.",
+  "runtime_min": 163.7
+}

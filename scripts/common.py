@@ -121,14 +121,35 @@ def standardise_mol(smiles):
         return None, None
 
 
-def standardise_series(smiles_iterable):
-    """Vectorised `standardise_mol` -> (list[smiles|None], list[inchikey|None])."""
-    out_smi, out_key = [], []
-    for s in smiles_iterable:
-        smi, key = standardise_mol(s)
-        out_smi.append(smi)
-        out_key.append(key)
-    return out_smi, out_key
+# Below this many records the pool costs more to start than it saves.
+_PARALLEL_STANDARDISE_MIN = 5000
+
+
+def standardise_workers():
+    """Default process count for `standardise_series`, leaving two cores free."""
+    return max(1, min(14, (os.cpu_count() or 2) - 2))
+
+
+def standardise_series(smiles_iterable, n_jobs=None):
+    """Vectorised `standardise_mol` -> (list[smiles|None], list[inchikey|None]).
+
+    Standardising one molecule is ~100 ms, dominated by tautomer canonicalisation,
+    and depends on nothing but that molecule. Serially, the 738k-record screening
+    library takes about 21 hours, which made step 05 look hung on one core; across
+    processes it is roughly an hour. `Pool.map` preserves input order, and each
+    record is standardised by the same deterministic function either way, so the
+    parallel and serial paths return identical output -- asserted by a test.
+    """
+    smiles = list(smiles_iterable)
+    if n_jobs is None:
+        n_jobs = standardise_workers()
+    if n_jobs == 1 or len(smiles) < _PARALLEL_STANDARDISE_MIN:
+        pairs = [standardise_mol(s) for s in smiles]
+    else:
+        import multiprocessing as mp
+        with mp.Pool(n_jobs) as pool:
+            pairs = pool.map(standardise_mol, smiles, chunksize=200)
+    return [p[0] for p in pairs], [p[1] for p in pairs]
 
 
 # ----------------------------------------------------------------------------
