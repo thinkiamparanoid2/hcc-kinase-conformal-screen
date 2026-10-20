@@ -29,6 +29,15 @@ WHAT CHANGED AND WHY:
   (`pan_kinase_alert`). A hit that is in-domain, active and on a known scaffold is
   an analogue, and is counted separately from genuinely novel scaffolds.
 
+* THE SHORTLIST IS THE INTERVAL CRITERION, NOT THE APPLICABILITY DOMAIN.
+  `consensus_hits.csv` holds the compounds whose conformal interval's lower bound
+  clears the activity threshold on at least one target. Being in-domain and
+  predicted active is no longer a second way onto the list: tau is non-binding on
+  two of three targets, so that rule admitted 94% of the library and the file came
+  out at 213 MB. The in-AD counts are still reported in `screen_summary.json`,
+  measured over the whole library, because that fraction is what says the domain
+  filter is not biting.
+
 * A NEAREST-NEIGHBOUR BASELINE RANKS THE SAME LIBRARY.
   `nn_baseline_pred` is a similarity-weighted 5-NN prediction over the training
   set. If it recovers the same hits as the model, the model adds nothing -- so the
@@ -57,6 +66,21 @@ CHUNK = 2000
 REDISCOVERY_SIM = 0.90
 
 _W = {}
+
+
+def shortlist(cons):
+    """The hits: conformal interval lower bound clears the threshold somewhere.
+
+    Being inside the applicability domain is not a second way to qualify. tau came
+    out non-binding on FGFR4 and EGFR, so `in_AD` admits the whole library there
+    and `n_targets_inAD_active >= 1` selected 94% of the parents -- a 213 MB file
+    whose size measured the calibration rather than the compounds. Ordering is
+    unchanged, so dropping that arm removes only the tail: the annotated top 200
+    and the docked candidates come from the rows kept here either way.
+    """
+    return cons[cons["n_targets_interval_active"] >= 1].sort_values(
+        ["n_targets_interval_active", "n_targets_inAD_active", "mean_pred"],
+        ascending=False)
 
 
 def _init_worker(train_smiles_by_target, in_train_by_target):
@@ -344,20 +368,19 @@ def main():
             j = C.TARGETS.index(b_t)
             cross[f"{a}_vs_{b_t}"] = float(C.spearman(pred_matrix[:, i], pred_matrix[:, j]))
 
-    cons = cons[(cons["n_targets_interval_active"] >= 1) |
-                (cons["n_targets_inAD_active"] >= 1)].sort_values(
-        ["n_targets_interval_active", "n_targets_inAD_active", "mean_pred"],
-        ascending=False)
-    cons.to_csv(os.path.join(OUT_DIR, "consensus_hits.csv"), index=False)
+    # The in-AD counts below are computed over the whole library, where the
+    # admitted fraction is the point; the hit-based ones over the shortlist.
+    hits = shortlist(cons)
+    hits.to_csv(os.path.join(OUT_DIR, "consensus_hits.csv"), index=False)
 
-    novel = (~cons["rediscovery_any"]) & (~cons["known_scaffold_all_targets"])
+    novel = (~hits["rediscovery_any"]) & (~hits["known_scaffold_all_targets"])
     summary["consensus"] = {
         "any_target_inAD_active": int((cons["n_targets_inAD_active"] >= 1).sum()),
         "two_or_more_targets_inAD_active": int((cons["n_targets_inAD_active"] >= 2).sum()),
         "all_three_inAD_active": int((cons["n_targets_inAD_active"] == 3).sum()),
         "any_target_interval_active": int((cons["n_targets_interval_active"] >= 1).sum()),
         "novel_scaffold_and_not_rediscovery": int(novel.sum()),
-        "pan_kinase_alert_among_hits": int(cons["pan_kinase_alert"].sum()),
+        "pan_kinase_alert_among_hits": int(hits["pan_kinase_alert"].sum()),
         "cross_target_prediction_spearman": cross,
         "consensus_caveat": "The three targets are ATP-site kinases trained on "
                             "overlapping chemotypes, so their predictions are "

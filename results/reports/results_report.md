@@ -301,7 +301,7 @@ Library: 738,827 records collapsed to 690,177 unique 2D parents (690,177 featuri
 
 | any_target_inAD_active | two_or_more_targets_inAD_active | all_three_inAD_active | any_target_interval_active | novel_scaffold_and_not_rediscovery | pan_kinase_alert_among_hits |
 |---|---|---|---|---|---|
-| 645850 | 122205 | 214 | 3271 | 616486 | 91439 |
+| 645850 | 122205 | 214 | 3271 | 3063 | 293 |
 
 Cross-target prediction rank correlation: `{"FGFR4_vs_EGFR": 0.363, "FGFR4_vs_VEGFR2": 0.164, "EGFR_vs_VEGFR2": 0.18}`
 

@@ -19,11 +19,6 @@ data/features/*_training_features.csv
 # Full 738k per-target raw screen dumps (~40 MB each; consensus shortlists are tracked)
 results/predictions/*_screen_full.csv.gz
 
-# The uncompressed shortlist. With tau non-binding on two of three targets the
-# in-AD rule admits 94% of the library, so this file came out at 213 MB -- past
-# GitHub's 100 MB hard limit. consensus_hits.csv.gz is tracked in its place and
-# holds every row; step 05 rewrites the plain CSV on each run.
-results/predictions/consensus_hits.csv
 
 # Pipeline checkpoint is run-local state, not a result
 pipeline_checkpoint.json

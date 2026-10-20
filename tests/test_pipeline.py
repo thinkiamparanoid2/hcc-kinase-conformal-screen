@@ -544,3 +544,41 @@ def test_candidate_staleness_guard_accepts_the_columns_step_05_writes(tmp_path,
     with pytest.raises(Exception) as exc:
         mod.dock_consensus_candidates()
     assert not isinstance(exc.value, mod.StaleScreenOutput)
+
+
+# ----------------------------------------------------------------------------
+# Screen shortlist rule
+# ----------------------------------------------------------------------------
+
+def _screen_module():
+    import importlib.util
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "scripts", "05_screen_coconut_library.py")
+    spec = importlib.util.spec_from_file_location("screen05", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_shortlist_is_the_interval_criterion_not_the_domain_flag():
+    """Being in-domain and predicted active must not put a compound on the list.
+
+    tau is non-binding on two of three targets, so `in_AD` admits the whole
+    library there; an `n_targets_inAD_active >= 1` arm selected 94% of the parents
+    and the shortlist stopped naming anything. Ordering is unaffected by dropping
+    it, which is why the annotated and docked subsets did not move.
+    """
+    import pandas as pd
+
+    mod = _screen_module()
+    cons = pd.DataFrame({
+        "identifier": ["keep2", "keep1", "drop", "drop_too"],
+        "n_targets_interval_active": [2, 1, 0, 0],
+        "n_targets_inAD_active": [3, 1, 3, 0],
+        "mean_pred": [8.0, 7.0, 9.9, 6.0],
+    })
+
+    hits = mod.shortlist(cons)
+    assert list(hits["identifier"]) == ["keep2", "keep1"]
+    # the dropped rows outrank nothing that was kept, whatever their in-AD count
+    assert hits["n_targets_interval_active"].is_monotonic_decreasing
