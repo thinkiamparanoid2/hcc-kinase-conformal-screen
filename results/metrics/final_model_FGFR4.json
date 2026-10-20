@@ -1,53 +1,70 @@
 {
   "target": "FGFR4",
   "model": "RF-ecfp",
-  "n_train": 2459,
-  "n_cal": 608,
+  "n_train": 2515,
+  "n_cal": 553,
   "n_test": 541,
   "alpha": 0.1,
   "edges": [
     0.0,
+    0.6,
     0.7,
     1.0001
   ],
   "bin_table": [
     {
       "sim_lo": 0.0,
-      "sim_hi": 0.7,
-      "n_cal": 328,
-      "n_test": 309,
-      "half_width_90": 1.483560849145301,
-      "conformal_level_used": 0.9054878048780488,
-      "test_MAE": 0.8516969905648775,
-      "test_coverage": 0.8220064724919094,
+      "sim_hi": 0.6,
+      "n_cal": 159,
+      "n_test": 205,
+      "half_width_90": 1.4949824870322252,
+      "conformal_level_used": 0.9056603773584906,
+      "test_MAE": 0.8896932792482569,
+      "test_coverage": 0.8,
       "test_coverage_CI95": {
-        "lo": 0.7766990291262136,
-        "hi": 0.8640776699029126,
+        "lo": 0.7414634146341463,
+        "hi": 0.8536585365853658,
         "n_boot": 2000
       },
-      "half_width_90_isotonic": 1.483560849145301
+      "half_width_90_isotonic": 1.4949824870322252
+    },
+    {
+      "sim_lo": 0.6,
+      "sim_hi": 0.7,
+      "n_cal": 188,
+      "n_test": 100,
+      "half_width_90": 1.4249133013998407,
+      "conformal_level_used": 0.9095744680851063,
+      "test_MAE": 0.7393986343095819,
+      "test_coverage": 0.89,
+      "test_coverage_CI95": {
+        "lo": 0.83,
+        "hi": 0.95,
+        "n_boot": 2000
+      },
+      "half_width_90_isotonic": 1.4249133013998407
     },
     {
       "sim_lo": 0.7,
       "sim_hi": 1.0001,
-      "n_cal": 280,
-      "n_test": 232,
-      "half_width_90": 1.2143862524611104,
-      "conformal_level_used": 0.9035714285714286,
-      "test_MAE": 0.5205545286603371,
-      "test_coverage": 0.9439655172413793,
+      "n_cal": 206,
+      "n_test": 236,
+      "half_width_90": 1.2190319401684981,
+      "conformal_level_used": 0.9077669902912622,
+      "test_MAE": 0.522062572854009,
+      "test_coverage": 0.923728813559322,
       "test_coverage_CI95": {
-        "lo": 0.9137931034482759,
-        "hi": 0.9698275862068966,
+        "lo": 0.885593220338983,
+        "hi": 0.9533898305084746,
         "n_boot": 2000
       },
-      "half_width_90_isotonic": 1.2143862524611104
+      "half_width_90_isotonic": 1.2190319401684981
     }
   ],
   "tau": 0.0,
   "tau_CI95": {
     "lo": 0.0,
-    "hi": 0.7,
+    "hi": 0.6,
     "median": 0.0,
     "n_boot": 400,
     "frac_no_reliable_domain": 0.0
@@ -58,40 +75,40 @@
       "delta": -0.1,
       "frac_test_in_AD": 1.0,
       "n_test_in_AD": 541,
-      "R2_in_AD": 0.42898700782552346,
-      "coverage_in_AD": 0.8743068391866913
+      "R2_in_AD": 0.4098021369107834,
+      "coverage_in_AD": 0.8706099815157117
     },
     {
       "tau": 0.0,
       "delta": -0.05,
       "frac_test_in_AD": 1.0,
       "n_test_in_AD": 541,
-      "R2_in_AD": 0.42898700782552346,
-      "coverage_in_AD": 0.8743068391866913
+      "R2_in_AD": 0.4098021369107834,
+      "coverage_in_AD": 0.8706099815157117
     },
     {
       "tau": 0.0,
       "delta": 0.0,
       "frac_test_in_AD": 1.0,
       "n_test_in_AD": 541,
-      "R2_in_AD": 0.42898700782552346,
-      "coverage_in_AD": 0.8743068391866913
+      "R2_in_AD": 0.4098021369107834,
+      "coverage_in_AD": 0.8706099815157117
     },
     {
       "tau": 0.05,
       "delta": 0.05,
       "frac_test_in_AD": 1.0,
       "n_test_in_AD": 541,
-      "R2_in_AD": 0.42898700782552346,
-      "coverage_in_AD": 0.8743068391866913
+      "R2_in_AD": 0.4098021369107834,
+      "coverage_in_AD": 0.8706099815157117
     },
     {
       "tau": 0.1,
       "delta": 0.1,
       "frac_test_in_AD": 1.0,
       "n_test_in_AD": 541,
-      "R2_in_AD": 0.42898700782552346,
-      "coverage_in_AD": 0.8743068391866913
+      "R2_in_AD": 0.4098021369107834,
+      "coverage_in_AD": 0.8706099815157117
     }
   ],
   "tau_is_binding": false,
@@ -125,14 +142,14 @@
   "tau_interpretation": "tau sits at the lowest similarity bin: at a 1.65 pIC50 width budget every calibration bin qualifies, so the applicability domain excludes nothing and the gate is vacuous for this target. With this calibration set, bins wide enough for a stable 90% quantile are too wide to resolve a threshold. See tau_by_budget for what a tighter budget would give.",
   "max_half_width_budget": 1.65,
   "min_cal_per_bin": 150,
-  "overall_coverage": 0.8743068391866913,
-  "mean_half_width": 1.3681292291254632,
+  "overall_coverage": 0.8706099815157117,
+  "mean_half_width": 1.36165300898587,
   "conformal_validity": {
     "nominal_coverage": 0.9,
-    "empirical_coverage_held_out_chembl": 0.8743068391866913,
+    "empirical_coverage_held_out_chembl": 0.8706099815157117,
     "empirical_coverage_CI95": {
-      "lo": 0.8465341959334565,
-      "hi": 0.9002310536044359,
+      "lo": 0.8410351201478743,
+      "hi": 0.9001848428835489,
       "n_boot": 2000
     },
     "holds_for": "held-out ChEMBL scaffolds, which are exchangeable with the calibration set",
@@ -140,35 +157,35 @@
   },
   "test_all": {
     "n": 541,
-    "R2": 0.42898700782552346,
-    "RMSE": 0.9326982678072497,
-    "MAE": 0.709691350709326,
-    "Spearman": 0.6583490283618093,
-    "Pearson": 0.6681873312168113,
-    "prevalence": 0.7504621072088724,
-    "AUC": 0.8493523079729977,
-    "PR_AUC": 0.933473179889148,
-    "MCC": 0.42094487071317616,
+    "R2": 0.4098021369107834,
+    "RMSE": 0.9473101603060791,
+    "MAE": 0.7015411328473142,
+    "Spearman": 0.6426693227571816,
+    "Pearson": 0.6522305524984517,
+    "prevalence": 0.767097966728281,
+    "AUC": 0.8398546567221266,
+    "PR_AUC": 0.9351665344154512,
+    "MCC": 0.4459525934039503,
     "R2_CI95": {
-      "lo": 0.3568206355376749,
-      "hi": 0.4939023772388554,
+      "lo": 0.3376109824363852,
+      "hi": 0.4750267786237116,
       "n_boot": 2000
     }
   },
   "test_in_AD": {
     "n": 541,
-    "R2": 0.42898700782552346,
-    "RMSE": 0.9326982678072497,
-    "MAE": 0.709691350709326,
-    "Spearman": 0.6583490283618093,
-    "Pearson": 0.6681873312168113,
-    "prevalence": 0.7504621072088724,
-    "AUC": 0.8493523079729977,
-    "PR_AUC": 0.933473179889148,
-    "MCC": 0.42094487071317616,
+    "R2": 0.4098021369107834,
+    "RMSE": 0.9473101603060791,
+    "MAE": 0.7015411328473142,
+    "Spearman": 0.6426693227571816,
+    "Pearson": 0.6522305524984517,
+    "prevalence": 0.767097966728281,
+    "AUC": 0.8398546567221266,
+    "PR_AUC": 0.9351665344154512,
+    "MCC": 0.4459525934039503,
     "R2_CI95": {
-      "lo": 0.3568206355376749,
-      "hi": 0.4939023772388554,
+      "lo": 0.3376109824363852,
+      "hi": 0.4750267786237116,
       "n_boot": 2000
     }
   },
@@ -178,63 +195,63 @@
   },
   "test_NP_like": {
     "n": 20,
-    "R2": 0.02901234738071401,
-    "RMSE": 0.870700318947099,
-    "MAE": 0.7348616835283011,
-    "Spearman": 0.27077850730250447,
-    "Pearson": 0.3723143036014498,
+    "R2": 0.035126863486006576,
+    "RMSE": 0.9534625056167457,
+    "MAE": 0.7966828248977371,
+    "Spearman": 0.2888304077893381,
+    "Pearson": 0.41485449407041936,
     "prevalence": 0.45,
-    "AUC": 0.6969696969696969,
-    "PR_AUC": 0.7795603089720737,
-    "MCC": -0.050251890762960605,
+    "AUC": 0.6464646464646464,
+    "PR_AUC": 0.7596288515406164,
+    "MCC": 0.09851341054817479,
     "R2_CI95": {
-      "lo": -0.8051565646960039,
-      "hi": 0.4510564616561251,
+      "lo": -0.9057808499197704,
+      "hi": 0.4011599109764853,
       "n_boot": 2000
     }
   },
   "test_not_NP_like": {
     "n": 521,
-    "R2": 0.43084375878236336,
-    "RMSE": 0.9349962965907617,
-    "MAE": 0.7087251191231848,
-    "Spearman": 0.6530113583908026,
-    "Pearson": 0.6690768141891061,
-    "prevalence": 0.761996161228407,
-    "AUC": 0.8459819614853336,
-    "PR_AUC": 0.9350598635966512,
-    "MCC": 0.44618821417388954,
+    "R2": 0.4076672247189863,
+    "RMSE": 0.9470731892601403,
+    "MAE": 0.6978888605996973,
+    "Spearman": 0.6312392397234745,
+    "Pearson": 0.6493525671837547,
+    "prevalence": 0.7792706333973128,
+    "AUC": 0.8340544013707432,
+    "PR_AUC": 0.936597930292042,
+    "MCC": 0.4654545856315364,
     "R2_CI95": {
-      "lo": 0.35888140022678405,
-      "hi": 0.49761712078457393,
+      "lo": 0.33806647835885056,
+      "hi": 0.4751664797074762,
       "n_boot": 2000
     }
   },
   "np_transfer": {
-    "n_cal_NP_like": 14,
+    "n_cal_NP_like": 22,
     "n_test_NP_like": 20,
     "cutoff": 0.0,
-    "coverage_on_NP_like_test": 0.95,
+    "coverage_on_NP_like_test": 0.85,
     "coverage_on_NP_like_test_CI95": {
-      "lo": 0.85,
+      "lo": 0.65,
       "hi": 1.0,
       "n_boot": 2000
     },
     "coverage_on_non_NP_like_test": 0.8714011516314779,
     "coverage_on_non_NP_like_test_CI95": {
       "lo": 0.8426103646833013,
-      "hi": 0.8983205374280228,
+      "hi": 0.8982725527831094,
       "n_boot": 2000
     },
     "np_specific_half_width_90": null,
-    "status": "insufficient NP-like calibration molecules (14 < 60): no NP-specific conformal stratum can be fitted from ChEMBL alone. Intervals transferred to a natural-product library therefore carry NO coverage guarantee, only an extrapolation of the synthetic-chemistry error model."
+    "status": "insufficient NP-like calibration molecules (22 < 60): no NP-specific conformal stratum can be fitted from ChEMBL alone. Intervals transferred to a natural-product library therefore carry NO coverage guarantee, only an extrapolation of the synthetic-chemistry error model."
   },
   "domain_shift_diagnostics": {
-    "np_score_vs_abs_error_spearman": 0.04687551955089621,
-    "median_np_score_train": -1.2007349943790102,
-    "median_np_score_test": -1.2817248461783926,
-    "median_max_sim_test": 0.6710526315789473
+    "np_score_vs_abs_error_spearman": 0.004391250095514474,
+    "median_np_score_train": -1.2496034104045775,
+    "median_np_score_test": -1.1903921831684263,
+    "median_max_sim_test": 0.6756756756756757
   },
   "frac_test_in_AD": 1.0,
-  "test_active_prevalence": 0.7504621072088724
+  "test_active_prevalence": 0.767097966728281
 }

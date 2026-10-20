@@ -139,8 +139,11 @@ def prepare_library():
     n_records = len(lib)
     lib = lib.dropna(subset=["canonical_smiles"]).reset_index(drop=True)
 
-    print(f"[+] Standardising {len(lib):,} library structures...", flush=True)
+    t_std = time.time()
+    print(f"[+] Standardising {len(lib):,} library structures "
+          f"across {C.standardise_workers():,} processes...", flush=True)
     std_smi, std_key = C.standardise_series(lib["canonical_smiles"])
+    print(f"[+] Standardised in {(time.time() - t_std) / 60:.1f} min", flush=True)
     lib["standardised_smiles"] = std_smi
     lib["inchikey"] = std_key
     n_unparsable = int(lib["inchikey"].isna().sum())

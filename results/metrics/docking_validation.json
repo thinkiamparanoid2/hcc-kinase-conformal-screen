@@ -5,14 +5,14 @@
     "box_padding_A": 8.0,
     "min_box_A": 22.0,
     "n_per_class_enrichment": 50,
-    "enrich_exhaustiveness": 8,
-    "enrich_n_seeds": 1,
-    "vina_cpu_threads": 4,
+    "enrich_exhaustiveness": 32,
+    "enrich_n_seeds": 3,
+    "vina_cpu_threads": 16,
     "tool_versions": {
       "vina": "AutoDock Vina v1.2.5",
-      "open_babel": "Open Babel 3.1.0 -- Feb 17 2026 -- 06:48:53"
+      "open_babel": "Open Babel 3.1.0 -- Feb 17 2026 -- 06:52:02"
     },
-    "protocol_note": "REDUCED PROTOCOL: enrich_exhaustiveness 8 instead of 32, enrich_n_seeds 1 instead of 3. These numbers are not the protocol's own and should be regenerated before publication: unset DOCK_ENRICH_EXHAUSTIVENESS DOCK_ENRICH_N_SEEDS and re-run step 06 on hardware with more cores. Scores are insensitive to exhaustiveness in this pocket set (8, 16 and 32 agree to 0.01 kcal/mol on a test ligand), and the enrichment control's uncertainty is the bootstrap CI over compounds rather than the per-ligand search spread, so a reduced enrichment budget costs the replicate error bars and not the ranking itself."
+    "protocol_note": null
   },
   "redocking_control": {
     "EGFR": {
@@ -28,17 +28,17 @@
         23.8
       ],
       "exhaustiveness": 32,
-      "affinity_top1_kcal_mol": -7.839,
+      "affinity_top1_kcal_mol": -7.809,
       "rmsd_top1_A": 8.004,
-      "rmsd_best_of_n_A": 1.286,
-      "rmsd_top1_superimposed_A": 1.764,
-      "best_pose_rank": 3,
-      "affinity_gap_to_best_pose_kcal": -0.075,
+      "rmsd_best_of_n_A": 1.283,
+      "rmsd_top1_superimposed_A": 1.78,
+      "best_pose_rank": 4,
+      "affinity_gap_to_best_pose_kcal": -0.166,
       "n_poses": 9,
       "n_rmsd_computed": 9,
       "rmsd_method": "RDKit CalcRMS, symmetry-corrected heavy atoms, in place (no superposition); the molecules are matched on the heavy-atom graph because the crystal reference and the Open Babel pose perceive bond orders differently",
       "pose_prediction_success_top1": false,
-      "secs": 0.8
+      "secs": 1.4
     },
     "FGFR4": {
       "ligand": "BLU9931-analog (6LF)",
@@ -53,17 +53,17 @@
         22.0
       ],
       "exhaustiveness": 32,
-      "affinity_top1_kcal_mol": -8.55,
-      "rmsd_top1_A": 6.499,
-      "rmsd_best_of_n_A": 2.314,
-      "rmsd_top1_superimposed_A": 2.639,
-      "best_pose_rank": 8,
-      "affinity_gap_to_best_pose_kcal": -0.945,
+      "affinity_top1_kcal_mol": -9.127,
+      "rmsd_top1_A": 3.334,
+      "rmsd_best_of_n_A": 1.811,
+      "rmsd_top1_superimposed_A": 1.443,
+      "best_pose_rank": 7,
+      "affinity_gap_to_best_pose_kcal": -0.823,
       "n_poses": 9,
       "n_rmsd_computed": 9,
       "rmsd_method": "RDKit CalcRMS, symmetry-corrected heavy atoms, in place (no superposition); the molecules are matched on the heavy-atom graph because the crystal reference and the Open Babel pose perceive bond orders differently",
       "pose_prediction_success_top1": false,
-      "secs": 0.8
+      "secs": 1.3
     },
     "VEGFR2": {
       "ligand": "Sorafenib (BAX)",
@@ -78,212 +78,224 @@
         27.0
       ],
       "exhaustiveness": 32,
-      "affinity_top1_kcal_mol": -12.223,
-      "rmsd_top1_A": 0.561,
-      "rmsd_best_of_n_A": 0.561,
-      "rmsd_top1_superimposed_A": 0.253,
+      "affinity_top1_kcal_mol": -12.201,
+      "rmsd_top1_A": 0.577,
+      "rmsd_best_of_n_A": 0.577,
+      "rmsd_top1_superimposed_A": 0.265,
       "best_pose_rank": 1,
       "affinity_gap_to_best_pose_kcal": 0.0,
-      "n_poses": 8,
-      "n_rmsd_computed": 8,
+      "n_poses": 9,
+      "n_rmsd_computed": 9,
       "rmsd_method": "RDKit CalcRMS, symmetry-corrected heavy atoms, in place (no superposition); the molecules are matched on the heavy-atom graph because the crystal reference and the Open Babel pose perceive bond orders differently",
       "pose_prediction_success_top1": true,
-      "secs": 0.8
+      "secs": 1.3
     }
   },
   "enrichment_control": {
     "FGFR4": {
       "status": "ok",
       "n_actives": 50,
-      "n_inactives": 49,
+      "n_inactives": 50,
       "active_threshold_pIC50": 7.0,
       "inactive_threshold_pIC50": 5.0,
       "sampling": "random within class, MW-matched; NOT potency extremes",
-      "inactive_class": "measured weak binders; no censored '>' records in the committed data, so re-run step 01 with network access to populate a true inactive class",
-      "n_censored_inactives": 0,
-      "active_mean_kcal": -8.95,
-      "inactive_mean_kcal": -8.62,
-      "mean_replicate_sd_kcal": 0.0,
-      "docking_ROC_AUC": 0.623,
+      "inactive_class": "censored '>' records (true inactives)",
+      "n_censored_inactives": 40,
+      "active_mean_kcal": -9.18,
+      "inactive_mean_kcal": -8.7,
+      "mean_replicate_sd_kcal": 0.056,
+      "docking_ROC_AUC": 0.696,
       "docking_ROC_AUC_CI95": {
-        "lo": 0.5147232723755935,
-        "hi": 0.7297543207040361,
+        "lo": 0.5916937242683877,
+        "hi": 0.7910830299136145,
         "n_boot": 2000
       },
-      "EF1pct": 0.0,
-      "EF5pct": 1.58,
-      "BEDROC_alpha20": 0.721,
-      "mannwhitney_p": 0.01758,
+      "EF1pct": 2.0,
+      "EF5pct": 2.0,
+      "BEDROC_alpha20": 0.89,
+      "mannwhitney_p": 0.00037,
       "null_baselines": {
         "ROC_AUC": {
-          "observed": 0.6231,
-          "null_mean": 0.5004,
-          "null_5pct": 0.4067,
-          "null_95pct": 0.5972,
-          "p_one_sided": 0.018,
+          "observed": 0.6962,
+          "null_mean": 0.4996,
+          "null_5pct": 0.4022,
+          "null_95pct": 0.5975,
+          "p_one_sided": 0.0005,
           "exceeds_null": true,
           "n_perm": 2000
         },
         "EF1pct": {
-          "observed": 0.0,
-          "null_mean": 0.9781,
+          "observed": 2.0,
+          "null_mean": 0.982,
           "null_5pct": 0.0,
-          "null_95pct": 1.98,
-          "p_one_sided": 1.0,
+          "null_95pct": 2.0,
+          "p_one_sided": 0.491,
           "exceeds_null": false,
           "n_perm": 2000
         },
         "EF5pct": {
-          "observed": 1.584,
-          "null_mean": 0.9983,
+          "observed": 2.0,
+          "null_mean": 0.9994,
+          "null_5pct": 0.4,
+          "null_95pct": 1.6,
+          "p_one_sided": 0.0275,
+          "exceeds_null": true,
+          "n_perm": 2000
+        },
+        "BEDROC_alpha20": {
+          "observed": 0.8905,
+          "null_mean": 0.5002,
+          "null_5pct": 0.2585,
+          "null_95pct": 0.7504,
+          "p_one_sided": 0.0015,
+          "exceeds_null": true,
+          "n_perm": 2000
+        }
+      },
+      "metric_caveat": "Top 1% of 100 compounds is 1 compound, and the active fraction is 0.50, not the ~1% that EF and BEDROC were designed for. Read each metric against its null_baselines entry: exceeds_null is whether the value falls outside the middle 90% of what a random ranking gives on this same design.",
+      "secs": 6.9
+    },
+    "EGFR": {
+      "status": "ok",
+      "n_actives": 50,
+      "n_inactives": 49,
+      "active_threshold_pIC50": 7.0,
+      "inactive_threshold_pIC50": 5.0,
+      "sampling": "random within class, MW-matched; NOT potency extremes",
+      "inactive_class": "censored '>' records (true inactives)",
+      "n_censored_inactives": 30,
+      "active_mean_kcal": -9.39,
+      "inactive_mean_kcal": -9.49,
+      "mean_replicate_sd_kcal": 0.059,
+      "docking_ROC_AUC": 0.444,
+      "docking_ROC_AUC_CI95": {
+        "lo": 0.3272780211375331,
+        "hi": 0.560176538831976,
+        "n_boot": 2000
+      },
+      "EF1pct": 1.98,
+      "EF5pct": 1.19,
+      "BEDROC_alpha20": 0.54,
+      "mannwhitney_p": 0.83029,
+      "null_baselines": {
+        "ROC_AUC": {
+          "observed": 0.4445,
+          "null_mean": 0.4988,
+          "null_5pct": 0.4029,
+          "null_95pct": 0.5922,
+          "p_one_sided": 0.8235,
+          "exceeds_null": false,
+          "n_perm": 2000
+        },
+        "EF1pct": {
+          "observed": 1.98,
+          "null_mean": 1.0326,
+          "null_5pct": 0.0,
+          "null_95pct": 1.98,
+          "p_one_sided": 0.5215,
+          "exceeds_null": false,
+          "n_perm": 2000
+        },
+        "EF5pct": {
+          "observed": 1.188,
+          "null_mean": 0.995,
           "null_5pct": 0.396,
           "null_95pct": 1.584,
-          "p_one_sided": 0.1745,
+          "p_one_sided": 0.505,
           "exceeds_null": false,
           "n_perm": 2000
         },
         "BEDROC_alpha20": {
-          "observed": 0.7213,
-          "null_mean": 0.5034,
-          "null_5pct": 0.263,
-          "null_95pct": 0.7431,
-          "p_one_sided": 0.071,
+          "observed": 0.54,
+          "null_mean": 0.5031,
+          "null_5pct": 0.2572,
+          "null_95pct": 0.7426,
+          "p_one_sided": 0.4115,
           "exceeds_null": false,
           "n_perm": 2000
         }
       },
       "metric_caveat": "Top 1% of 99 compounds is 1 compound, and the active fraction is 0.51, not the ~1% that EF and BEDROC were designed for. Read each metric against its null_baselines entry: exceeds_null is whether the value falls outside the middle 90% of what a random ranking gives on this same design.",
-      "secs": 6.7
+      "secs": 7.1
     },
-    "EGFR": {
+    "VEGFR2": {
       "status": "ok",
       "n_actives": 50,
       "n_inactives": 50,
       "active_threshold_pIC50": 7.0,
       "inactive_threshold_pIC50": 5.0,
       "sampling": "random within class, MW-matched; NOT potency extremes",
-      "inactive_class": "measured weak binders; no censored '>' records in the committed data, so re-run step 01 with network access to populate a true inactive class",
-      "n_censored_inactives": 0,
-      "active_mean_kcal": -9.22,
-      "inactive_mean_kcal": -9.37,
-      "mean_replicate_sd_kcal": 0.0,
-      "docking_ROC_AUC": 0.416,
+      "inactive_class": "censored '>' records (true inactives)",
+      "n_censored_inactives": 37,
+      "active_mean_kcal": -10.11,
+      "inactive_mean_kcal": -9.39,
+      "mean_replicate_sd_kcal": 0.045,
+      "docking_ROC_AUC": 0.693,
       "docking_ROC_AUC_CI95": {
-        "lo": 0.30434129389632103,
-        "hi": 0.5346222367734973,
+        "lo": 0.5854341736694678,
+        "hi": 0.7915455191738529,
         "n_boot": 2000
       },
       "EF1pct": 2.0,
-      "EF5pct": 1.2,
-      "BEDROC_alpha20": 0.565,
-      "mannwhitney_p": 0.92759,
+      "EF5pct": 1.6,
+      "BEDROC_alpha20": 0.899,
+      "mannwhitney_p": 0.00045,
       "null_baselines": {
         "ROC_AUC": {
-          "observed": 0.4156,
-          "null_mean": 0.4987,
-          "null_5pct": 0.4012,
-          "null_95pct": 0.5972,
-          "p_one_sided": 0.9235,
-          "exceeds_null": false,
+          "observed": 0.6928,
+          "null_mean": 0.4986,
+          "null_5pct": 0.4032,
+          "null_95pct": 0.594,
+          "p_one_sided": 0.0,
+          "exceeds_null": true,
           "n_perm": 2000
         },
         "EF1pct": {
           "observed": 2.0,
-          "null_mean": 0.984,
+          "null_mean": 1.002,
           "null_5pct": 0.0,
           "null_95pct": 2.0,
-          "p_one_sided": 0.492,
+          "p_one_sided": 0.501,
           "exceeds_null": false,
           "n_perm": 2000
         },
         "EF5pct": {
-          "observed": 1.2,
-          "null_mean": 0.9842,
+          "observed": 1.6,
+          "null_mean": 0.9974,
           "null_5pct": 0.4,
           "null_95pct": 1.6,
-          "p_one_sided": 0.4825,
+          "p_one_sided": 0.178,
           "exceeds_null": false,
           "n_perm": 2000
         },
         "BEDROC_alpha20": {
-          "observed": 0.5651,
-          "null_mean": 0.4945,
-          "null_5pct": 0.245,
-          "null_95pct": 0.7492,
-          "p_one_sided": 0.3285,
-          "exceeds_null": false,
+          "observed": 0.8992,
+          "null_mean": 0.4989,
+          "null_5pct": 0.2399,
+          "null_95pct": 0.7438,
+          "p_one_sided": 0.003,
+          "exceeds_null": true,
           "n_perm": 2000
         }
       },
       "metric_caveat": "Top 1% of 100 compounds is 1 compound, and the active fraction is 0.50, not the ~1% that EF and BEDROC were designed for. Read each metric against its null_baselines entry: exceeds_null is whether the value falls outside the middle 90% of what a random ranking gives on this same design.",
-      "secs": 6.3
-    },
-    "VEGFR2": {
-      "status": "ok",
-      "n_actives": 49,
-      "n_inactives": 50,
-      "active_threshold_pIC50": 7.0,
-      "inactive_threshold_pIC50": 5.0,
-      "sampling": "random within class, MW-matched; NOT potency extremes",
-      "inactive_class": "measured weak binders; no censored '>' records in the committed data, so re-run step 01 with network access to populate a true inactive class",
-      "n_censored_inactives": 0,
-      "active_mean_kcal": -9.65,
-      "inactive_mean_kcal": -9.46,
-      "mean_replicate_sd_kcal": 0.0,
-      "docking_ROC_AUC": 0.536,
-      "docking_ROC_AUC_CI95": {
-        "lo": 0.417275321239607,
-        "hi": 0.6577368744872846,
-        "n_boot": 2000
-      },
-      "EF1pct": 2.02,
-      "EF5pct": 2.02,
-      "BEDROC_alpha20": 0.79,
-      "mannwhitney_p": 0.26899,
-      "null_baselines": {
-        "ROC_AUC": {
-          "observed": 0.5361,
-          "null_mean": 0.5003,
-          "null_5pct": 0.4065,
-          "null_95pct": 0.5941,
-          "p_one_sided": 0.2725,
-          "exceeds_null": false,
-          "n_perm": 2000
-        },
-        "EF1pct": {
-          "observed": 2.0204,
-          "null_mean": 0.987,
-          "null_5pct": 0.0,
-          "null_95pct": 2.0204,
-          "p_one_sided": 0.4885,
-          "exceeds_null": false,
-          "n_perm": 2000
-        },
-        "EF5pct": {
-          "observed": 2.0204,
-          "null_mean": 1.0041,
-          "null_5pct": 0.4041,
-          "null_95pct": 1.6163,
-          "p_one_sided": 0.028,
-          "exceeds_null": true,
-          "n_perm": 2000
-        },
-        "BEDROC_alpha20": {
-          "observed": 0.7905,
-          "null_mean": 0.4969,
-          "null_5pct": 0.2559,
-          "null_95pct": 0.7441,
-          "p_one_sided": 0.024,
-          "exceeds_null": true,
-          "n_perm": 2000
-        }
-      },
-      "metric_caveat": "Top 1% of 99 compounds is 1 compound, and the active fraction is 0.49, not the ~1% that EF and BEDROC were designed for. Read each metric against its null_baselines entry: exceeds_null is whether the value falls outside the middle 90% of what a random ranking gives on this same design.",
-      "secs": 6.5
+      "secs": 6.9
     }
   },
   "candidates_summary": {
-    "status": "results/predictions/consensus_hits.csv missing: there is no full-library screen to take candidates from. Run `python scripts/05_screen_coconut_library.py` (needs the COCONUT library; see data/README.md), then step 07 to annotate the shortlist."
+    "status": "ok",
+    "n_novel_docked": 23,
+    "n_control_docked": 8,
+    "per_target_novel_mean_kcal": {
+      "FGFR4": -9.63,
+      "EGFR": -9.98,
+      "VEGFR2": -8.38
+    },
+    "per_target_placement_failures": {
+      "FGFR4": 0,
+      "EGFR": 0,
+      "VEGFR2": 0
+    }
   },
   "score_comparability_note": "AutoDock Vina scores are empirical and receptor-specific. They are not transferable binding free energies, so a weaker score in one pocket than another is not evidence of selectivity. Compare within a target (see the <T>_vina_z columns), and treat any score weaker than -4.0 kcal/mol as a placement failure to investigate, not as a measured steric clash."
 }

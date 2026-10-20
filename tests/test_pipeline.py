@@ -403,7 +403,7 @@ def test_candidate_docking_refuses_a_pre_rewrite_screen_output(tmp_path, monkeyp
 
     with pytest.raises(mod.StaleScreenOutput) as excinfo:
         mod.dock_consensus_candidates()
-    assert "interval_lower_bound_active" in str(excinfo.value)
+    assert "n_targets_interval_active" in str(excinfo.value)
     assert "05_screen_coconut_library" in str(excinfo.value)
 
 
@@ -487,3 +487,60 @@ def test_benchmark_checkpoint_discards_rows_from_changed_data(tmp_path, monkeypa
     kept = [_json.loads(l) for l in jsonl.read_text().splitlines()]
     assert kept == [rows[1]]
     assert mod.done_keys() == {("EGFR", 1, "new")}
+
+
+def test_parallel_standardisation_matches_the_serial_path(monkeypatch):
+    """The pool is an optimisation, not a change in what is computed.
+
+    Serially the 738k screening library takes ~21 h in step 05, which is why this
+    is parallelised; the parallel path is only admissible if it returns exactly
+    what the serial one does, in the same order.
+    """
+    smiles = ["CC(=O)Oc1ccccc1C(=O)O", "CN1C=NC2=C1C(=O)N(C)C(=O)N2C",
+              "not_a_molecule", "c1ccccc1", "OC(=O)CC(O)(CC(=O)O)C(=O)O",
+              "CC(C)Cc1ccc(cc1)C(C)C(=O)O"] * 8
+    monkeypatch.setattr(C, "_PARALLEL_STANDARDISE_MIN", 4)
+
+    serial = C.standardise_series(smiles, n_jobs=1)
+    parallel = C.standardise_series(smiles, n_jobs=2)
+    assert parallel == serial
+    assert len(serial[0]) == len(smiles)
+    assert serial[0][2] is None and serial[1][2] is None  # unparsable stays None
+
+
+def test_candidate_staleness_guard_accepts_the_columns_step_05_writes(tmp_path,
+                                                                      monkeypatch):
+    """The guard must reject a pre-rewrite screen and pass a current one.
+
+    It named `interval_lower_bound_active` and `known_scaffold` -- keys of
+    screen_summary.json and of a frame internal to step 05, never columns of
+    consensus_hits_annotated.csv. Every current screen was therefore rejected and
+    candidate docking never ran.
+    """
+    import pandas as pd
+
+    mod = _docking_module()
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "results" / "predictions").mkdir(parents=True)
+
+    current = ["identifier", "name", "smiles", "pan_kinase_alert",
+               "n_targets_interval_active", "n_targets_inAD_active",
+               "known_scaffold_all_targets", "rediscovery_any", "mean_pred"]
+    pre_rewrite = ["identifier", "name", "smiles", "pan_kinase_alert",
+                   "confident_active", "mean_pred"]
+
+    def write(cols):
+        for name in ("consensus_hits.csv", "consensus_hits_annotated.csv"):
+            pd.DataFrame(columns=cols).to_csv(
+                tmp_path / "results" / "predictions" / name, index=False)
+
+    write(pre_rewrite)
+    with pytest.raises(mod.StaleScreenOutput, match="predates the current step 05"):
+        mod.dock_consensus_candidates()
+
+    # The current header clears the staleness check; it then fails later, on the
+    # empty candidate frame, which is proof the guard is no longer the blocker.
+    write(current)
+    with pytest.raises(Exception) as exc:
+        mod.dock_consensus_candidates()
+    assert not isinstance(exc.value, mod.StaleScreenOutput)
