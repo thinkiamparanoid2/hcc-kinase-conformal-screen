@@ -4,28 +4,37 @@ This directory holds the screen's own outputs:
 
 | File | Written by | What it is |
 |---|---|---|
-| `consensus_hits.csv.gz` | step 05 | Every library compound that clears the screen, with per-target prediction, interval lower bound, max-Tanimoto similarity, applicability-domain flag, scaffold novelty and pan-kinase alert. Step 05 writes the plain `consensus_hits.csv`; only the gzipped copy is tracked, because the uncompressed file is 213 MB and GitHub's hard limit is 100 MB. Steps 06 and 07 read the plain CSV, so gunzip it after a fresh clone. |
+| `consensus_hits.csv.gz` | step 05 | The shortlist: 3,718 compounds, with per-target prediction, interval lower bound, max-Tanimoto similarity, applicability-domain flag, scaffold novelty and pan-kinase alert. Step 05 writes the plain `consensus_hits.csv` (1.3 MB); only the gzipped copy is tracked. Steps 06 and 07 read the plain CSV, so gunzip it after a fresh clone. |
 | `consensus_hits_annotated.csv` | step 07 | The shortlist, with QED, PAINS and chemotype annotation. |
 | `consensus_hits_docked.csv` | step 06 | The shortlist with Vina scores per pocket, replicate SDs and within-target z-scores. |
 | `<TARGET>_screen_full.csv.gz` | step 05 | Predictions for the whole library, before any filter. Not tracked. |
 
-## Why the shortlist is so large
+## What the shortlist rule is, and why `in_AD` is not part of it
 
-`tau` came out non-binding for FGFR4 and EGFR (step 04 found every calibration
-similarity bin inside the width budget), so `in_AD` admits the whole library on
-those two targets and the shortlist rule `n_targets_inAD_active >= 1` selects
-645,851 of 690,177 parents -- 94% of the library. The in-AD counts for those two
-targets are therefore not a calibrated-reliable subset of anything, which
-`screen_summary.json` records per target as `in_AD_caveat`.
+A compound is on the shortlist if its conformal interval's lower bound clears the
+activity threshold on at least one target (`n_targets_interval_active >= 1`), or
+if it is a rediscovery of known chemistry and therefore belongs to step 06's
+control (`rediscovery_any`). That gives 3,718 of 690,177 parents.
 
-The criterion that does discriminate is the conformal interval's lower bound
-clearing the activity threshold (`n_targets_interval_active`): 3,271 compounds
-across all three targets, two to four orders of magnitude fewer. Read that as
-the hit count, not the in-AD column.
+`in_AD` is deliberately not a criterion. `tau` came out non-binding for FGFR4 and
+EGFR (step 04 found every calibration similarity bin inside the width budget), so
+`in_AD` admits the whole library on those two targets: including it selected
+645,851 parents, 94% of the library, in a 213 MB file whose size was a property
+of the calibration rather than of the compounds. The in-AD counts for those two
+targets are not a calibrated-reliable subset of anything, which
+`screen_summary.json` records per target as `in_AD_caveat`. Across all three
+targets 3,271 compounds are interval-active, two to four orders of magnitude
+fewer than the in-AD column: read that as the hit count.
 
-**The files that were here before** were
-produced before the pipeline was rebuilt: they named hits by a rule this work
-withdrew (`confident_active`, now `interval_lower_bound_active`), carried no
+Only 76 of the 523 rediscovery compounds are interval-active, so the rediscovery
+clause is what keeps step 06's control drawing from all 523 rather than from the
+subset the model is already confident about, which would quietly bias it.
+
+Every count in `screen_summary.json` is computed on the unfiltered frame, so
+narrowing this file changes no reported number.
+
+**The files that were here before** were produced before the pipeline was
+rebuilt: they named hits by a rule this work withdrew (`confident_active`, now `interval_lower_bound_active`), carried no
 scaffold-level novelty, and were not deduplicated to 2D parents, so a
 stereoisomer counted as several hits. They were removed rather than left in
 place, because a candidate list is the one file a reader will take at face
