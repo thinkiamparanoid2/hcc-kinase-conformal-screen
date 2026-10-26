@@ -7,9 +7,14 @@ screening library, and engineered features.
 
 | Files | Structure |
 |---|---|
-| `egfr_1m17.{pdb,pdbqt}`, `EGFR_clean_receptor.pdb` | EGFR kinase domain, active DFG-in, Erlotinib (`AQ4`) |
-| `fgfr4_5jkg.{pdb,pdbqt}`, `FGFR4_clean_receptor.pdb` | FGFR4 kinase domain, DFG-in, ligand `6LF` |
-| `vegfr2_4asd.{pdb,pdbqt}`, `VEGFR2_clean_receptor.pdb` | VEGFR2 kinase domain, inactive Type-II DFG-out, Sorafenib (`BAX`) |
+| `egfr_1m17.pdb`, `EGFR_clean_receptor.pdb` | EGFR kinase domain, active DFG-in, Erlotinib (`AQ4`) |
+| `fgfr4_5jkg.pdb`, `FGFR4_clean_receptor.pdb` | FGFR4 kinase domain, DFG-in, ligand `6LF` |
+| `vegfr2_4asd.pdb`, `VEGFR2_clean_receptor.pdb` | VEGFR2 kinase domain, inactive Type-II DFG-out, Sorafenib (`BAX`) |
+
+The `.pdbqt` receptors step 06 docks against are **not** tracked: Open Babel does
+not place polar hydrogens the same way twice, so a committed copy is stale as
+soon as the step runs. They are regenerated from `*_clean_receptor.pdb`, which is
+the real input (limitation K14).
 
 Binding-site centroids and box sizes are computed at run time from the
 co-crystallised ligand in chain A (step 06), not hard-coded, and the box is sized

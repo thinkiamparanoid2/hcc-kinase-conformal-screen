@@ -1,8 +1,8 @@
 # Where this work stands, and what to do next
 
-Written 2026-10-20, after re-running the whole pipeline on a Windows machine with
-the two external inputs the cloud container could not reach. Read this first when
-you come back to the project.
+Written 2026-10-20, after re-running the whole pipeline on a machine with network
+access to both external inputs, ChEMBL and the COCONUT library. Read this first
+when you come back to the project.
 
 Companion documents: [`limitations.md`](limitations.md) is the formal limitation
 register; [`REPRODUCE.md`](REPRODUCE.md) is how to run things. This file is the
@@ -11,8 +11,6 @@ state of play and the plan.
 ---
 
 ## 1. What changed in this run
-
-Branch `claude/project-thread-pv3x3o`, PR #4.
 
 **The inactive class now exists.** The committed ChEMBL CSVs were fetched before
 step 01 requested all five `standard_relation` values, so they held no `>`

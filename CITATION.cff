@@ -8,8 +8,9 @@ abstract: >-
   claimed where the model is calibrated, with orthogonal structure-based
   validation.
 authors:
-  - family-names: Maharandwa
-    given-names: ACP
+  - family-names: Bhuiyan
+    given-names: Ishmam Rashid
+    affiliation: BRAC University
 repository-code: "https://github.com/thinkiamparanoid2/hcc-kinase-conformal-screen"
 license: MIT
 keywords:

@@ -71,7 +71,17 @@ The budget can be reduced for a run, and every override is written into
 | `DOCK_N_PER_CLASS` | 50 | The power of the enrichment control. This is the setting the review raised from 12; leave it alone. |
 
 Results committed from a reduced run are marked as such and should be
-regenerated at the defaults before publication.
+regenerated at the defaults before publication. The committed results are at the
+full protocol: exhaustiveness 32, 3 seeds, `protocol_note: null`.
+
+### Resuming a paused step 06
+
+Delete `results/docking_poses/` before resuming, rather than letting the step
+skip the poses it already has. Existing poses are skipped, but the Open Babel
+receptor conversion runs unconditionally and does not place hydrogens the same
+way twice (K14), so a naive resume docks the earlier poses against one receptor
+build and the later ones against another. The affinities then come from two
+slightly different receptors and are not comparable within the run.
 
 ## 4. Determinism
 
