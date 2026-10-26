@@ -62,8 +62,8 @@
     "two_or_more_targets_inAD_active": 122205,
     "all_three_inAD_active": 214,
     "any_target_interval_active": 3271,
-    "novel_scaffold_and_not_rediscovery": 616486,
-    "pan_kinase_alert_among_hits": 91439,
+    "novel_scaffold_and_not_rediscovery": 3063,
+    "pan_kinase_alert_among_hits": 293,
     "cross_target_prediction_spearman": {
       "FGFR4_vs_EGFR": 0.36291745271731835,
       "FGFR4_vs_VEGFR2": 0.163666252688509,

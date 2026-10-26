@@ -56,6 +56,33 @@ OUT_DIR = os.path.join("results", "predictions")
 CHUNK = 2000
 REDISCOVERY_SIM = 0.90
 
+
+def hits(cons):
+    """The hits: the conformal interval's lower bound clears the threshold somewhere.
+
+    This is the hit criterion every reported count uses, and `in_AD` is not part of
+    it. tau came out non-binding on two of three targets, so being in-domain and
+    predicted active admits 94% of the library; counting over that made
+    `pan_kinase_alert_among_hits` and `novel_scaffold_and_not_rediscovery` describe
+    the library rather than the hits.
+    """
+    return cons[cons["n_targets_interval_active"] >= 1]
+
+
+def shortlist(cons):
+    """The file a reader takes at face value: the hits, plus rediscoveries.
+
+    A rediscovery of known chemistry belongs to step 06's control even where the
+    model is not confident about it. Only 76 of the 523 rediscovery compounds are
+    interval-active, so without this arm the control would draw only from the
+    subset the model already likes, which would quietly bias it.
+    """
+    return cons[(cons["n_targets_interval_active"] >= 1) |
+                cons["rediscovery_any"]].sort_values(
+        ["n_targets_interval_active", "n_targets_inAD_active", "mean_pred"],
+        ascending=False)
+
+
 _W = {}
 
 
@@ -358,24 +385,26 @@ def main():
     # drawing from all 523 instead of from the subset the model is confident
     # about, which would quietly bias the control.
     #
-    # Every count below is computed on the unfiltered frame, so narrowing the
-    # file changes no reported number.
+    # No count below is read off the written file, so narrowing it changes no
+    # reported number. The in-AD counts are library-wide, because the admitted
+    # fraction is what says the domain filter is not biting; the hit-based counts
+    # are over `hit_rows`, the interval criterion. Taking those two over the
+    # library instead reported 616,486 novel scaffolds and 91,439 pan-kinase
+    # alerts "among hits", when the hits number 3,271.
     cons_all = cons
-    cons = cons[(cons["n_targets_interval_active"] >= 1) |
-                cons["rediscovery_any"]].sort_values(
-        ["n_targets_interval_active", "n_targets_inAD_active", "mean_pred"],
-        ascending=False)
+    cons = shortlist(cons_all)
     cons.to_csv(os.path.join(OUT_DIR, "consensus_hits.csv"), index=False)
 
-    novel = ((~cons_all["rediscovery_any"]) &
-             (~cons_all["known_scaffold_all_targets"]))
+    hit_rows = hits(cons_all)
+    novel = ((~hit_rows["rediscovery_any"]) &
+             (~hit_rows["known_scaffold_all_targets"]))
     summary["consensus"] = {
         "any_target_inAD_active": int((cons_all["n_targets_inAD_active"] >= 1).sum()),
         "two_or_more_targets_inAD_active": int((cons_all["n_targets_inAD_active"] >= 2).sum()),
         "all_three_inAD_active": int((cons_all["n_targets_inAD_active"] == 3).sum()),
         "any_target_interval_active": int((cons_all["n_targets_interval_active"] >= 1).sum()),
         "novel_scaffold_and_not_rediscovery": int(novel.sum()),
-        "pan_kinase_alert_among_hits": int(cons_all["pan_kinase_alert"].sum()),
+        "pan_kinase_alert_among_hits": int(hit_rows["pan_kinase_alert"].sum()),
         "shortlist_rows": int(len(cons)),
         "shortlist_rule": "n_targets_interval_active >= 1 OR rediscovery_any. "
                           "in_AD is excluded on purpose: tau is non-binding for "

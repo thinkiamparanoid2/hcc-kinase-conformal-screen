@@ -547,8 +547,34 @@ def test_candidate_staleness_guard_accepts_the_columns_step_05_writes(tmp_path,
 
 
 # ----------------------------------------------------------------------------
-# Shortlist rule
+# Shortlist rule and hit counting
 # ----------------------------------------------------------------------------
+
+def _screen_module():
+    import importlib.util
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "scripts", "05_screen_coconut_library.py")
+    spec = importlib.util.spec_from_file_location("screen05", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _cons_frame():
+    import pandas as pd
+
+    # Row 1 is in-AD active on all three targets and on no interval; row 2 is a
+    # rediscovery the model is not confident about.
+    return pd.DataFrame({
+        "identifier":                ["iv2", "inad", "red", "neither", "iv1"],
+        "n_targets_interval_active": [2, 0, 0, 0, 1],
+        "n_targets_inAD_active":     [3, 3, 1, 0, 0],
+        "rediscovery_any":           [False, False, True, False, False],
+        "known_scaffold_all_targets": [False, False, True, False, True],
+        "pan_kinase_alert":          [True, True, True, True, False],
+        "mean_pred":                 [8.0, 9.9, 7.5, 6.0, 7.0],
+    })
+
 
 def test_shortlist_excludes_in_AD_but_keeps_every_rediscovery():
     """The shortlist rule must not admit a compound on `in_AD` alone.
@@ -558,20 +584,41 @@ def test_shortlist_excludes_in_AD_but_keeps_every_rediscovery():
     the rediscovery clause because only 76 of 523 rediscovery compounds are
     interval-active, and step 06's rediscovery control must draw from all of
     them, not from the subset the model happens to be confident about.
+
+    This calls the shipped rule rather than restating it, because a test that
+    re-implements the thing it checks passes whatever the pipeline does.
     """
-    import pandas as pd
+    mod = _screen_module()
+    kept = list(mod.shortlist(_cons_frame())["identifier"])
 
-    cons = pd.DataFrame({
-        "n_targets_interval_active": [2, 0, 0, 0, 1],
-        "n_targets_inAD_active":     [3, 3, 1, 0, 0],
-        "rediscovery_any":           [False, False, True, False, False],
-    })
+    assert kept == ["iv2", "iv1", "red"]
+    assert "inad" not in kept   # in-AD on all three targets, and still excluded
+    assert "red" in kept        # on no interval, but the control needs it
 
-    keep = (cons["n_targets_interval_active"] >= 1) | cons["rediscovery_any"]
 
-    assert keep.tolist() == [True, False, True, False, True]
-    # Row 1 is in-AD active on all three targets and is still excluded: that is
-    # the whole point of dropping in_AD from the rule.
-    assert not keep[1]
-    # Row 2 is on no interval but is a rediscovery, so the control keeps it.
-    assert keep[2]
+def test_hit_counts_are_taken_over_the_hits_not_the_whole_library():
+    """`*_among_hits` must count hits, and the hits are the interval criterion.
+
+    Counting these over the library reported 616,486 novel scaffolds and 91,439
+    pan-kinase alerts "among hits" when there were 3,271 hits, because `in_AD`
+    admits 94% of the library where `tau` is non-binding.
+    """
+    mod = _screen_module()
+    cons = _cons_frame()
+    hit_rows = mod.hits(cons)
+
+    assert list(hit_rows["identifier"]) == ["iv2", "iv1"]
+    # Every row carries a pan-kinase alert except iv1, so counting over the
+    # library gives 4 and counting over the hits gives 1.
+    assert int(cons["pan_kinase_alert"].sum()) == 4
+    assert int(hit_rows["pan_kinase_alert"].sum()) == 1
+
+    novel = (~hit_rows["rediscovery_any"]) & (~hit_rows["known_scaffold_all_targets"])
+    assert int(novel.sum()) == 1   # iv2 only; iv1 is on a known scaffold
+
+
+def test_the_shortlist_is_a_superset_of_the_hits():
+    """Keeping the rediscovery arm may only ever add rows to the hits."""
+    mod = _screen_module()
+    cons = _cons_frame()
+    assert set(mod.hits(cons)["identifier"]) <= set(mod.shortlist(cons)["identifier"])
