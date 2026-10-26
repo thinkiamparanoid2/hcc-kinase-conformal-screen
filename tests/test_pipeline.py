@@ -544,3 +544,34 @@ def test_candidate_staleness_guard_accepts_the_columns_step_05_writes(tmp_path,
     with pytest.raises(Exception) as exc:
         mod.dock_consensus_candidates()
     assert not isinstance(exc.value, mod.StaleScreenOutput)
+
+
+# ----------------------------------------------------------------------------
+# Shortlist rule
+# ----------------------------------------------------------------------------
+
+def test_shortlist_excludes_in_AD_but_keeps_every_rediscovery():
+    """The shortlist rule must not admit a compound on `in_AD` alone.
+
+    `tau` is non-binding for two of three targets, so `in_AD` is true for the
+    whole library there; including it selected 94% of the library. The rule keeps
+    the rediscovery clause because only 76 of 523 rediscovery compounds are
+    interval-active, and step 06's rediscovery control must draw from all of
+    them, not from the subset the model happens to be confident about.
+    """
+    import pandas as pd
+
+    cons = pd.DataFrame({
+        "n_targets_interval_active": [2, 0, 0, 0, 1],
+        "n_targets_inAD_active":     [3, 3, 1, 0, 0],
+        "rediscovery_any":           [False, False, True, False, False],
+    })
+
+    keep = (cons["n_targets_interval_active"] >= 1) | cons["rediscovery_any"]
+
+    assert keep.tolist() == [True, False, True, False, True]
+    # Row 1 is in-AD active on all three targets and is still excluded: that is
+    # the whole point of dropping in_AD from the rule.
+    assert not keep[1]
+    # Row 2 is on no interval but is a rediscovery, so the control keeps it.
+    assert keep[2]

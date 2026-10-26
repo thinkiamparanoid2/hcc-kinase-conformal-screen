@@ -344,20 +344,44 @@ def main():
             j = C.TARGETS.index(b_t)
             cross[f"{a}_vs_{b_t}"] = float(C.spearman(pred_matrix[:, i], pred_matrix[:, j]))
 
+    # The shortlist is the one file a reader takes at face value, so it holds
+    # only compounds with a calibrated reason to be on it: the conformal
+    # interval's lower bound clears the activity threshold, or the compound is a
+    # rediscovery of known chemistry and therefore belongs to step 06's control.
+    #
+    # `in_AD` is deliberately NOT a shortlist criterion. `tau` came out
+    # non-binding for two of three targets, so `in_AD` admits the entire library
+    # there, and including it selected 645,851 of 690,177 parents -- 94% of the
+    # library, a 213 MB file whose size was a property of the calibration rather
+    # than of the compounds. Only 76 of the 523 rediscovery compounds are
+    # interval-active, so the rediscovery clause is what keeps step 06's control
+    # drawing from all 523 instead of from the subset the model is confident
+    # about, which would quietly bias the control.
+    #
+    # Every count below is computed on the unfiltered frame, so narrowing the
+    # file changes no reported number.
+    cons_all = cons
     cons = cons[(cons["n_targets_interval_active"] >= 1) |
-                (cons["n_targets_inAD_active"] >= 1)].sort_values(
+                cons["rediscovery_any"]].sort_values(
         ["n_targets_interval_active", "n_targets_inAD_active", "mean_pred"],
         ascending=False)
     cons.to_csv(os.path.join(OUT_DIR, "consensus_hits.csv"), index=False)
 
-    novel = (~cons["rediscovery_any"]) & (~cons["known_scaffold_all_targets"])
+    novel = ((~cons_all["rediscovery_any"]) &
+             (~cons_all["known_scaffold_all_targets"]))
     summary["consensus"] = {
-        "any_target_inAD_active": int((cons["n_targets_inAD_active"] >= 1).sum()),
-        "two_or_more_targets_inAD_active": int((cons["n_targets_inAD_active"] >= 2).sum()),
-        "all_three_inAD_active": int((cons["n_targets_inAD_active"] == 3).sum()),
-        "any_target_interval_active": int((cons["n_targets_interval_active"] >= 1).sum()),
+        "any_target_inAD_active": int((cons_all["n_targets_inAD_active"] >= 1).sum()),
+        "two_or_more_targets_inAD_active": int((cons_all["n_targets_inAD_active"] >= 2).sum()),
+        "all_three_inAD_active": int((cons_all["n_targets_inAD_active"] == 3).sum()),
+        "any_target_interval_active": int((cons_all["n_targets_interval_active"] >= 1).sum()),
         "novel_scaffold_and_not_rediscovery": int(novel.sum()),
-        "pan_kinase_alert_among_hits": int(cons["pan_kinase_alert"].sum()),
+        "pan_kinase_alert_among_hits": int(cons_all["pan_kinase_alert"].sum()),
+        "shortlist_rows": int(len(cons)),
+        "shortlist_rule": "n_targets_interval_active >= 1 OR rediscovery_any. "
+                          "in_AD is excluded on purpose: tau is non-binding for "
+                          "some targets, so it admits the whole library there "
+                          "and selects 94% of it. The in-AD counts above are "
+                          "library-wide and are not a reliability filter.",
         "cross_target_prediction_spearman": cross,
         "consensus_caveat": "The three targets are ATP-site kinases trained on "
                             "overlapping chemotypes, so their predictions are "
